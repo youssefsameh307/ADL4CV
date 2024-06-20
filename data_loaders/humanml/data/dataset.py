@@ -8,10 +8,24 @@ import codecs as cs
 from tqdm import tqdm
 import spacy
 
+import matplotlib.cm as cm
+import random
+
+from io import BytesIO
+
 from torch.utils.data._utils.collate import default_collate
 from data_loaders.humanml.utils.word_vectorizer import WordVectorizer
 from data_loaders.humanml.utils.get_opt import get_opt
 
+from PIL import Image
+
+import matplotlib
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.animation import FuncAnimation, PillowWriter
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import mpl_toolkits.mplot3d.axes3d as p3
+import matplotlib.cm as cm
 # import spacy
 
 def collate_fn(batch):
@@ -218,13 +232,26 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-        # id_list = id_list[:200]
+        id_list = id_list[:200] #TODO comment this out
 
         new_name_list = []
         length_list = []
+
+        fullpath = opt.motion_dir.rsplit('/', 1)
+        joints_dir = pjoin(fullpath[0],'new_joints')
+        conditions_dir = pjoin(fullpath[0],'conditions')
+
         for name in tqdm(id_list):
             try:
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
+                joints = np.load(pjoin(joints_dir, name + '.npy'))
+                ## TODO remove these when evaluating
+                # image = Image.open(conditions_dir + '/' + name + '.png')
+                # img_data = np.array(image)
+                # img_data = img_data / 255.0
+                img_data = torch.randn(3, 480, 480) 
+
+
                 if (len(motion)) < min_motion_len or (len(motion) >= 200):
                     continue
                 text_data = []
@@ -254,8 +281,10 @@ class Text2MotionDatasetV2(data.Dataset):
                                 while new_name in data_dict:
                                     new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
                                 data_dict[new_name] = {'motion': n_motion,
-                                                       'length': len(n_motion),
-                                                       'text':[text_dict]}
+                                                    'joints': joints,
+                                                    'condition': img_data,
+                                                    'length': len(n_motion),
+                                                    'text':[text_dict]}
                                 new_name_list.append(new_name)
                                 length_list.append(len(n_motion))
                             except:
@@ -265,6 +294,8 @@ class Text2MotionDatasetV2(data.Dataset):
 
                 if flag:
                     data_dict[name] = {'motion': motion,
+                                       'joints': joints,
+                                       'condition': img_data,
                                        'length': len(motion),
                                        'text': text_data}
                     new_name_list.append(name)
@@ -296,7 +327,8 @@ class Text2MotionDatasetV2(data.Dataset):
     def __getitem__(self, item):
         idx = self.pointer + item
         data = self.data_dict[self.name_list[idx]]
-        motion, m_length, text_list = data['motion'], data['length'], data['text']
+        motion, m_length, text_list, img_condition = data['motion'], data['length'], data['text'], data['condition']
+        
         # Randomly select a caption
         text_data = random.choice(text_list)
         caption, tokens = text_data['caption'], text_data['tokens']
@@ -332,7 +364,9 @@ class Text2MotionDatasetV2(data.Dataset):
             m_length = (m_length // self.opt.unit_length) * self.opt.unit_length
         idx = random.randint(0, len(motion) - m_length)
         motion = motion[idx:idx+m_length]
-
+        # joints = joints[idx:idx+m_length]
+        # motion_length = len(motion)
+        # img_condition = plot_3d_motion(joints)
         "Z Normalization"
         motion = (motion - self.mean) / self.std
 
@@ -342,7 +376,225 @@ class Text2MotionDatasetV2(data.Dataset):
                                      ], axis=0)
         # print(word_embeddings.shape, motion.shape)
         # print(tokens)
-        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
+        # go to train_loop and extract img_cond
+        # return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
+        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens), img_condition
+    
+
+
+
+
+
+###start of plot_3d_motion
+
+def plot_3d_motion(joints,title = '', radius=4, plotName = 'newplot.png'):
+#     matplotlib.use('Agg')
+
+    max_len = joints.shape[0]
+    target_frame = int(max_len//2)
+    kinematic_tree = [[0, 2, 5, 8, 11], [0, 1, 4, 7, 10], [0, 3, 6, 9, 12, 15], [9, 14, 17, 19, 21], [9, 13, 16, 18, 20]]
+
+    title_sp = title.split(' ')
+    if len(title_sp) > 10:
+        title = '\n'.join([' '.join(title_sp[:10]), ' '.join(title_sp[10:])])
+    def init():
+        ax.set_xlim3d([-radius / 2, radius / 2])
+        ax.set_ylim3d([0, radius])
+        ax.set_zlim3d([0, radius])
+        # print(title)
+        fig.suptitle(title, fontsize=20)
+        ax.grid(b=False)
+
+    def plot_xzPlane(minx, maxx, miny, minz, maxz):
+        ## Plot a plane XZ
+        verts = [
+            [minx, miny, minz],
+            [minx, miny, maxz],
+            [maxx, miny, maxz],
+            [maxx, miny, minz]
+        ]
+        xz_plane = Poly3DCollection([verts])
+        xz_plane.set_facecolor((0.5, 0.5, 0.5, 0.5))
+        ax.add_collection3d(xz_plane)
+
+    #         return ax
+
+    # (seq_len, joints_num, 3)
+    data = joints.copy().reshape(len(joints), -1, 3)
+
+    width_in_pixels = 480
+    height_in_pixels = 480
+
+    # Convert pixels to inches (1 inch = 2.54 cm)
+    width_in_inches = width_in_pixels / plt.rcParams['figure.dpi']
+    height_in_inches = height_in_pixels / plt.rcParams['figure.dpi']
+
+    # Create the plot with the specified size
+    # fig, ax = plt.subplots(figsize=(width_in_inches, height_in_inches))
+
+    fig = plt.figure(figsize=(width_in_inches, height_in_inches))
+
+    ax = p3.Axes3D(fig)
+    init()
+    MINS = data.min(axis=0).min(axis=0)
+    MAXS = data.max(axis=0).max(axis=0)
+    colors = ['green', 'pink', 'blue', 'yellow', 'red',  
+              'darkblue', 'darkblue', 'darkblue', 'darkblue', 'darkblue',
+             'darkred', 'darkred','darkred','darkred','darkred']
+    
+
+
+    # Set a seed value (e.g., 1234 for reproducibility)
+    random.seed(232113)
+
+    num_colors = len(colors)
+    colors = [(random.random(), random.random(), random.random()) for _ in range(num_colors+10)]
+
+
+    frame_number = data.shape[0]
+    #     print(data.shape)
+
+    height_offset = MINS[1]
+    data[:, :, 1] -= height_offset
+    trajec = data[:, 0, [0, 2]]
+    
+    # data[..., 0] -= data[:, 0:1, 0]
+    # data[..., 2] -= data[:, 0:1, 2]
+
+    #     print(trajec.shape)
+
+    def update(index , trajectory_only = 'False'):
+        #         print(index)
+        # ax.lines.clear()
+        ax.collections.clear()
+        # ax.lines = []
+        # ax.collections = []
+        ax.view_init(elev=120, azim=-90)
+        ax.dist = 7.5
+        #         ax =
+
+        # plot_xzPlane(MINS[0]
+        #             #  -trajec[index, 0]
+        #              , MAXS[0]
+        #             #  -trajec[index, 0]
+        #              ,0
+        #              ,MINS[2]
+        #             #    -trajec[index, 1]
+        #                  ,MAXS[2]
+        #                 #  -trajec[index, 1]
+        #                  )
+
+
+#         ax.scatter(data[index, :22, 0], data[index, :22, 1], data[index, :22, 2], color='black', s=3)
+        trajec_color = 'blue'
+        if trajectory_only == 'True':
+            trajec_color = 'red'
+
+        if index > 1:
+            ax.plot3D(trajec[:index, 0]
+                    #   -trajec[index, 0] ## these center the trajectory
+                      , np.zeros_like(trajec[:index, 0]),
+                        trajec[:index, 1]
+                        # -trajec[index, 1] ## these center the trajectory
+                        , linewidth=1.0,
+                      color=trajec_color
+                      )
+        #             ax = plot_xzPlane(ax, MINS[0], MAXS[0], 0, MINS[2], MAXS[2])
+        
+        
+
+        # cmap = cm.get_cmap('tab20')  # Choose a colormap
+        # num_colors = 22  # Assuming kinematic_tree has a defined length
+
+        cmap = cm.get_cmap('gist_ncar')
+        num_colors = 26
+        colors = cmap(np.linspace(0, 1, num_colors))
+        if (trajectory_only == 'False'):
+            
+            for i, (chain, color) in enumerate(zip(kinematic_tree, colors)):
+    #             print(color)
+                # print(chain)
+                if i < 5:
+                    linewidth = 4.0
+                else:
+                    linewidth = 2.0
+
+                for j in range(len(chain) - 1):
+                    start_idx = chain[j]
+                    
+                    norm = start_idx / (num_colors - 1)
+                    color = cmap(norm)
+
+                    end_idx = chain[j + 1]
+                    # color = colors[start_idx]
+
+                    ax.plot3D(
+                        [data[index, start_idx, 0], data[index, end_idx, 0]],
+                        [data[index, start_idx, 1], data[index, end_idx, 1]],
+                        [data[index, start_idx, 2], data[index, end_idx, 2]],
+                        linewidth=linewidth,
+                        color=colors[start_idx]
+            )
+
+        plt.axis('off')
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
+        ax.set_facecolor('black')
+        
+        # Set the color of the axes labels and ticks to white
+        ax.w_xaxis.set_pane_color((0, 0, 0, 1))
+        ax.w_yaxis.set_pane_color((0, 0, 0, 1))
+        ax.w_zaxis.set_pane_color((0, 0, 0, 1))
+        
+        ax.xaxis._axinfo['grid'].update(color = 'w', linewidth = 0.5)
+        ax.yaxis._axinfo['grid'].update(color = 'w', linewidth = 0.5)
+        ax.zaxis._axinfo['grid'].update(color = 'w', linewidth = 0.5)
+        
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.zaxis.label.set_color('white')
+        
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
+        ax.tick_params(axis='z', colors='white')
+        
+        fig.patch.set_facecolor('black')
+
+    # ani = FuncAnimation(fig, update, frames=frame_number, interval=1000/fps, repeat=False)
+
+    # ani.save(save_path, fps=fps)
+    update(max_len,'True')
+    update(target_frame)
+    
+    file_path = './conditions/' + plotName
+
+    buf = BytesIO()
+    # plt.savefig(file_path)
+    plt.savefig(buf, format='png')
+    plt.close() # Prevents figure from being displayed
+    buf.seek(0)
+    # image = Image.open(buf)
+    # Close the buffer
+    image = plt.imread(buf)
+    if image.shape[2] == 4:  # Check if the image has 4 channels
+            image = image[..., :3] 
+    image = np.transpose(image, (2, 0, 1))  # Change shape from (480, 480, 3) to (3, 480, 480)
+    image = image[np.newaxis, :]  
+    # Close the buffer
+    buf.close()
+    # image.show()
+    # buf.close()
+    # plt.show()
+    # plt.close()
+    
+
+    return image
+
+
+###end of plot_3d_motion
+
+
 
 
 '''For use of training baseline'''
@@ -658,11 +910,12 @@ class TextOnlyDataset(data.Dataset):
 
         new_name_list = []
         length_list = []
+        opt.text_dir = opt.text_dir.replace('././','./')
         for name in tqdm(id_list):
             try:
                 text_data = []
                 flag = False
-                with cs.open(pjoin(opt.text_dir, name + '.txt')) as f:
+                with cs.open(opt.text_dir+'/'+ name + '.txt') as f:
                     for line in f.readlines():
                         text_dict = {}
                         line_split = line.strip().split('#')
@@ -740,7 +993,8 @@ class HumanML3D(data.Dataset):
         opt.meta_dir = './dataset'
         self.opt = opt
         print('Loading dataset %s ...' % opt.dataset_name)
-
+        print(pjoin(opt.data_root, 'Mean.npy'))
+        print(mode)
         if mode == 'gt':
             # used by T2M models (including evaluators)
             self.mean = np.load(pjoin(opt.meta_dir, f'{opt.dataset_name}_mean.npy'))

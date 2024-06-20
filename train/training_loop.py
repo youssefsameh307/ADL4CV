@@ -128,14 +128,20 @@ class TrainLoop:
 
         for epoch in range(self.num_epochs):
             print(f'Starting epoch {epoch}')
-            for motion, cond in tqdm(self.data):
+            for motion, cond, img_condition in tqdm(self.data):
                 if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                     break
-
+                
+                # img_condition = img_condition.to(self.device)
                 motion = motion.to(self.device)
                 cond['y'] = {key: val.to(self.device) if torch.is_tensor(val) else val for key, val in cond['y'].items()}
 
-                self.run_step(motion, cond)
+                # TODO add the img_cond here
+                # self.model.loadCondition(img_condition)
+                if img_condition is not None:
+                    self.run_step(motion, cond, img_condition)
+                else:
+                    self.run_step(motion, cond)
                 if self.step % self.log_interval == 0:
                     for k,v in logger.get_current().dumpkvs().items():
                         if k == 'loss':
@@ -203,13 +209,13 @@ class TrainLoop:
         print(f'Evaluation time: {round(end_eval-start_eval)/60}min')
 
 
-    def run_step(self, batch, cond):
-        self.forward_backward(batch, cond)
+    def run_step(self, batch, cond, img_condition=None):
+        self.forward_backward(batch, cond, img_condition)
         self.mp_trainer.optimize(self.opt)
         self._anneal_lr()
         self.log_step()
 
-    def forward_backward(self, batch, cond):
+    def forward_backward(self, batch, cond, img_condition=None):
         self.mp_trainer.zero_grad()
         for i in range(0, batch.shape[0], self.microbatch):
             # Eliminates the microbatch feature
@@ -226,7 +232,8 @@ class TrainLoop:
                 micro,  # [bs, ch, image_size, image_size]
                 t,  # [bs](int) sampled timesteps
                 model_kwargs=micro_cond,
-                dataset=self.data.dataset
+                dataset=self.data.dataset,
+                img_condition=img_condition
             )
 
             if last_batch or not self.use_ddp:

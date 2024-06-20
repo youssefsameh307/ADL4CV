@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import clip
 from model.rotation2xyz import Rotation2xyz
-
-
+from model.controlformer import ModifiedTransformerEncoder
+import pickle
 
 class MDM(nn.Module):
     def __init__(self, modeltype, njoints, nfeats, num_actions, translation, pose_rep, glob, glob_rot,
@@ -47,7 +47,7 @@ class MDM(nn.Module):
         self.cond_mask_prob = kargs.get('cond_mask_prob', 0.)
         self.arch = arch
         self.gru_emb_dim = self.latent_dim if self.arch == 'gru' else 0
-        self.input_process = InputProcess(self.data_rep, self.input_feats+self.gru_emb_dim, self.latent_dim)
+        self.input_process = InputProcess(self.data_rep, self.input_feats+self.gru_emb_dim, self.latent_dim) # linear embedding layer for inpute features
 
         self.sequence_pos_encoder = PositionalEncoding(self.latent_dim, self.dropout)
         self.emb_trans_dec = emb_trans_dec
@@ -95,6 +95,17 @@ class MDM(nn.Module):
 
         self.rot2xyz = Rotation2xyz(device='cpu', dataset=self.dataset)
 
+        weights = torch.load("save/humanml_trans_enc_512/model000200000.pt",map_location=torch.device('cpu'))
+        load_model_wo_clip(self,weights)
+        
+        self.seqTransEncoder = ModifiedTransformerEncoder(num_layers=self.num_layers,
+                                                            d_model=self.latent_dim,
+                                                            nhead=self.num_heads,
+                                                            dim_feedforward=self.ff_size,
+                                                            dropout=self.dropout,
+                                                            activation=activation)
+        self.seqTransEncoder.load_original_weights(weights)
+
     def parameters_wo_clip(self):
         return [p for name, p in self.named_parameters() if not name.startswith('clip_model.')]
 
@@ -138,7 +149,7 @@ class MDM(nn.Module):
             texts = clip.tokenize(raw_text, truncate=True).to(device) # [bs, context_length] # if n_tokens > 77 -> will truncate
         return self.clip_model.encode_text(texts).float()
 
-    def forward(self, x, timesteps, y=None):
+    def forward(self, x, timesteps,img_condition=None, y=None):
         """
         x: [batch_size, njoints, nfeats, max_frames], denoted x_t in the paper
         timesteps: [batch_size] (int)
@@ -170,7 +181,7 @@ class MDM(nn.Module):
             # adding the timestep embed
             xseq = torch.cat((emb, x), axis=0)  # [seqlen+1, bs, d]
             xseq = self.sequence_pos_encoder(xseq)  # [seqlen+1, bs, d]
-            output = self.seqTransEncoder(xseq)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
+            output = self.seqTransEncoder(xseq,img_condition)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
 
         elif self.arch == 'trans_dec':
             if self.emb_trans_dec:
@@ -303,3 +314,8 @@ class EmbedAction(nn.Module):
         idx = input[:, 0].to(torch.long)  # an index array must be long
         output = self.action_embedding[idx]
         return output
+
+def load_model_wo_clip(model, state_dict):
+    missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
+    assert len(unexpected_keys) == 0
+    assert all([k.startswith('clip_model.') for k in missing_keys])

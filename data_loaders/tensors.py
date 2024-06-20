@@ -52,6 +52,10 @@ def collate(batch):
         action_text = [b['action_text']for b in notnone_batches]
         cond['y'].update({'action_text': action_text})
 
+    if 'img_condition' in notnone_batches[0]:
+        img_condition = [b['img_condition'] for b in notnone_batches]
+        return motion, cond, img_condition
+
     return motion, cond
 
 # an adapter to our collate func
@@ -62,6 +66,7 @@ def t2m_collate(batch):
         'text': b[2], #b[0]['caption']
         'tokens': b[6],
         'lengths': b[5],
+        'img_condition':b[7] #TODO remove this if not needed
     } for b in batch]
     return collate(adapted_batch)
 
