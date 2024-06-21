@@ -31,6 +31,9 @@ kit/
 t2m/
 body_models/
 glove*
+exp/
+dataset*
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

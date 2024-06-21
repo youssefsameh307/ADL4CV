@@ -232,19 +232,19 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-        id_list = id_list[:200] #TODO comment this out
+        id_list = np.array(id_list[:200]) #TODO comment this out
 
         new_name_list = []
         length_list = []
 
         fullpath = opt.motion_dir.rsplit('/', 1)
-        joints_dir = pjoin(fullpath[0],'new_joints')
-        conditions_dir = pjoin(fullpath[0],'conditions')
+        # joints_dir = pjoin(fullpath[0],'new_joints')
+        # conditions_dir = pjoin(fullpath[0],'conditions')
 
         for name in tqdm(id_list):
             try:
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
-                joints = np.load(pjoin(joints_dir, name + '.npy'))
+                # joints = np.load(pjoin(joints_dir, name + '.npy'))
                 ## TODO remove these when evaluating
                 # image = Image.open(conditions_dir + '/' + name + '.png')
                 # img_data = np.array(image)
@@ -281,7 +281,7 @@ class Text2MotionDatasetV2(data.Dataset):
                                 while new_name in data_dict:
                                     new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
                                 data_dict[new_name] = {'motion': n_motion,
-                                                    'joints': joints,
+                                                    # 'joints': joints,
                                                     'condition': img_data,
                                                     'length': len(n_motion),
                                                     'text':[text_dict]}
@@ -294,7 +294,7 @@ class Text2MotionDatasetV2(data.Dataset):
 
                 if flag:
                     data_dict[name] = {'motion': motion,
-                                       'joints': joints,
+                                    #    'joints': joints,
                                        'condition': img_data,
                                        'length': len(motion),
                                        'text': text_data}
