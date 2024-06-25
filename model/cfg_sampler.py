@@ -22,12 +22,12 @@ class ClassifierFreeSampleModel(nn.Module):
         self.cond_mode = self.model.cond_mode
         self.encode_text = self.model.encode_text
 
-    def forward(self, x, timesteps, y=None):
+    def forward(self, x, timesteps, y=None, img_condition=torch.rand(1,3,480,480)):
         cond_mode = self.model.cond_mode
         assert cond_mode in ['text', 'action']
         y_uncond = deepcopy(y)
         y_uncond['uncond'] = True
-        out = self.model(x, timesteps, y)
-        out_uncond = self.model(x, timesteps, y_uncond)
+        out = self.model(x, timesteps, y, img_condition)
+        out_uncond = self.model(x, timesteps, y_uncond,img_condition)
         return out_uncond + (y['scale'].view(-1, 1, 1, 1) * (out - out_uncond))
 

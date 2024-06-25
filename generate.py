@@ -18,9 +18,17 @@ from data_loaders.humanml.utils.plot_script import plot_3d_motion
 import shutil
 from data_loaders.tensors import collate
 
+from PIL import Image
+import numpy as np
+import torch
 
-def main():
+def main(model_p=None,test_prompt=None):
     args = generate_args()
+    if not model_p == None: 
+        args.model_path = model_p
+    if test_prompt:
+        args.text_prompt = test_prompt
+        
     fixseed(args.seed)
     out_path = args.output_dir
     name = os.path.basename(os.path.dirname(args.model_path))
@@ -123,6 +131,7 @@ def main():
             dump_steps=None,
             noise=None,
             const_noise=False,
+            img_condition = load_image()
         )
 
         # Recover XYZ *positions* from HumanML3D vector representation
@@ -197,6 +206,28 @@ def main():
 
     abs_path = os.path.abspath(out_path)
     print(f'[Done] Results are at [{abs_path}]')
+
+def load_image():
+    # Load the image
+    img_path = '/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/newplot.png'
+    img = Image.open(img_path)
+
+    # Check if the image has an alpha channel
+    if img.mode == 'RGBA':
+        img = img.convert('RGB')  # Remove alpha channel by converting to RGB mode
+
+    # Resize the image to 480x480 pixels
+    img_resized = img.resize((480, 480))
+
+    # Convert PIL image to NumPy array
+    img_array = np.array(img_resized)
+
+    # Reshape the array to (1, 3, 480, 480)
+    img_tensor = torch.tensor(img_array).permute(2, 0, 1).unsqueeze(0)
+
+    print(img_tensor.shape)
+    # Print tensor shape to verify
+    return img_tensor
 
 
 def save_multiple_samples(args, out_path, row_print_template, all_print_template, row_file_template, all_file_template,

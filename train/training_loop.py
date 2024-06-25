@@ -19,12 +19,28 @@ from data_loaders.humanml.networks.evaluator_wrapper import EvaluatorMDMWrapper
 from eval import eval_humanml, eval_humanact12_uestc
 from data_loaders.get_data import get_dataset_loader
 
+import os
+import glob
 
 # For ImageNet experiments, this was a good default value.
 # We found that the lg_loss_scale quickly climbed to
 # 20-21 within the first ~1K steps of training.
 INITIAL_LOG_LOSS_SCALE = 20.0
 
+def delete_pytorch_files():
+    # Define the pattern for the files to delete
+    pattern = '/dev/shm/pytorch*'
+    
+    # Get a list of files that match the pattern
+    files_to_delete = glob.glob(pattern)
+    
+    # Delete each file
+    for file_path in files_to_delete:
+        try:
+            os.remove(file_path)
+            print(f"Deleted file: {file_path}")
+        except Exception as e:
+            print(f"Error deleting file {file_path}: {e}")
 
 class TrainLoop:
     def __init__(self, args, train_platform, model, diffusion, data):
@@ -51,6 +67,7 @@ class TrainLoop:
         self.global_batch = self.batch_size # * dist.get_world_size()
         self.num_steps = args.num_steps
         self.num_epochs = self.num_steps // len(self.data) + 1
+        print('epochs: ',self.num_epochs)
 
         self.sync_cuda = torch.cuda.is_available()
 
@@ -125,9 +142,9 @@ class TrainLoop:
             self.opt.load_state_dict(state_dict)
 
     def run_loop(self):
-
         for epoch in range(self.num_epochs):
             print(f'Starting epoch {epoch}')
+            fetch_time = time.time()
             for motion, cond, img_condition in tqdm(self.data):
                 if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                     break
@@ -152,6 +169,10 @@ class TrainLoop:
                         else:
                             self.train_platform.report_scalar(name=k, value=v, iteration=self.step, group_name='Loss')
 
+                if self.step%10 ==0:
+                    print(f"Cleaning up /dev/shm/pytorch files at epoch {epoch + 1}")
+                    delete_pytorch_files()
+
                 if self.step % self.save_interval == 0:
                     self.save()
                     self.model.eval()
@@ -162,6 +183,63 @@ class TrainLoop:
                     if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                         return
                 self.step += 1
+            
+            # for motion, cond, img_condition in tqdm(self.data):
+            #     # Measure time to fetch item from self.data
+
+            #     if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
+            #         break
+                
+            #     fetch_time = time.time() - fetch_time
+            #     run_step_start_time = time.time()
+            #     # img_condition = img_condition.to(self.device)
+            #     motion = motion.to(self.device)
+            #     cond['y'] = {key: val.to(self.device) if torch.is_tensor(val) else val for key, val in cond['y'].items()}
+
+            #     # Measure time for run_step
+                
+            #     if img_condition is not None:
+            #         self.run_step(motion, cond, img_condition)
+            #     else:
+            #         self.run_step(motion, cond)
+            #     run_step_time = time.time() - run_step_start_time
+
+            #     # Logging and saving logic
+            #     if self.step % self.log_interval == 0:
+            #         log_start_time = time.time()
+            #         for k, v in logger.get_current().dumpkvs().items():
+            #             if k == 'loss':
+            #                 print(f'step[{self.step + self.resume_step}]: loss[{v:.5f}]')
+            #             if k in ['step', 'samples'] or '_q' in k:
+            #                 continue
+            #             else:
+            #                 self.train_platform.report_scalar(name=k, value=v, iteration=self.step, group_name='Loss')
+            #         log_time = time.time() - log_start_time
+
+            #     if self.step % self.save_interval == 0:
+            #         save_start_time = time.time()
+            #         self.save()
+            #         self.model.eval()
+            #         self.evaluate()
+            #         self.model.train()
+            #         save_time = time.time() - save_start_time
+
+            #         # Integration test condition
+            #         if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
+            #             return
+
+            #     # Increment step counter
+            #     self.step += 1
+
+            #     # Print or log times for each segment
+            #     print(f"Time to fetch item from self.data: {fetch_time:.4f} seconds")
+            #     print(f"Time for run_step: {run_step_time:.4f} seconds")
+            #     if self.step % self.log_interval == 0:
+            #         print(f"Time for logging: {log_time:.4f} seconds")
+            #     if self.step % self.save_interval == 0:
+            #         print(f"Time for saving: {save_time:.4f} seconds")
+            #     fetch_time = time.time()
+            
             if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                 break
         # Save the last checkpoint if it wasn't already saved.
@@ -214,6 +292,39 @@ class TrainLoop:
         self.mp_trainer.optimize(self.opt)
         self._anneal_lr()
         self.log_step()
+        
+    # def run_step(self, batch, cond, img_condition=None):
+    #     start_time = time.time()
+
+    #     # Measure forward_backward time
+    #     forward_backward_start = time.time()
+    #     self.forward_backward(batch, cond, img_condition)
+    #     forward_backward_time = time.time() - forward_backward_start
+
+    #     # Measure optimize time
+    #     optimize_start = time.time()
+    #     self.mp_trainer.optimize(self.opt)
+    #     optimize_time = time.time() - optimize_start
+
+    #     # Measure _anneal_lr time
+    #     anneal_lr_start = time.time()
+    #     self._anneal_lr()
+    #     anneal_lr_time = time.time() - anneal_lr_start
+
+    #     # Measure log_step time
+    #     log_step_start = time.time()
+    #     self.log_step()
+    #     log_step_time = time.time() - log_step_start
+
+    #     # Total time for run_step
+    #     total_time = time.time() - start_time
+
+    #     # Logging times
+    #     print(f"Time taken for forward_backward: {forward_backward_time:.4f} seconds")
+    #     print(f"Time taken for optimize: {optimize_time:.4f} seconds")
+    #     print(f"Time taken for _anneal_lr: {anneal_lr_time:.4f} seconds")
+    #     print(f"Time taken for log_step: {log_step_time:.4f} seconds")
+    #     print(f"Total time for run_step: {total_time:.4f} seconds")
 
     def forward_backward(self, batch, cond, img_condition=None):
         self.mp_trainer.zero_grad()

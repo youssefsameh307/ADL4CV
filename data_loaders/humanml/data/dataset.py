@@ -232,25 +232,26 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-        id_list = np.array(id_list[:200]) #TODO comment this out
+                if len(id_list) > 5000: #TODO change this
+                    break
+        id_list = np.array(id_list) 
 
         new_name_list = []
         length_list = []
 
         fullpath = opt.motion_dir.rsplit('/', 1)
-        # joints_dir = pjoin(fullpath[0],'new_joints')
+        joints_dir = pjoin(fullpath[0],'new_joints')
         # conditions_dir = pjoin(fullpath[0],'conditions')
 
         for name in tqdm(id_list):
             try:
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
-                # joints = np.load(pjoin(joints_dir, name + '.npy'))
+                joints = np.load(pjoin(joints_dir, name + '.npy'))
                 ## TODO remove these when evaluating
                 # image = Image.open(conditions_dir + '/' + name + '.png')
                 # img_data = np.array(image)
                 # img_data = img_data / 255.0
                 img_data = torch.randn(3, 480, 480) 
-
 
                 if (len(motion)) < min_motion_len or (len(motion) >= 200):
                     continue
@@ -281,7 +282,7 @@ class Text2MotionDatasetV2(data.Dataset):
                                 while new_name in data_dict:
                                     new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
                                 data_dict[new_name] = {'motion': n_motion,
-                                                    # 'joints': joints,
+                                                    'joints': joints,
                                                     'condition': img_data,
                                                     'length': len(n_motion),
                                                     'text':[text_dict]}
@@ -294,7 +295,7 @@ class Text2MotionDatasetV2(data.Dataset):
 
                 if flag:
                     data_dict[name] = {'motion': motion,
-                                    #    'joints': joints,
+                                       'joints': joints,
                                        'condition': img_data,
                                        'length': len(motion),
                                        'text': text_data}
@@ -327,8 +328,7 @@ class Text2MotionDatasetV2(data.Dataset):
     def __getitem__(self, item):
         idx = self.pointer + item
         data = self.data_dict[self.name_list[idx]]
-        motion, m_length, text_list, img_condition = data['motion'], data['length'], data['text'], data['condition']
-        
+        motion, m_length, text_list, img_condition,joints = data['motion'], data['length'], data['text'], data['condition'], data['joints']
         # Randomly select a caption
         text_data = random.choice(text_list)
         caption, tokens = text_data['caption'], text_data['tokens']
@@ -364,9 +364,10 @@ class Text2MotionDatasetV2(data.Dataset):
             m_length = (m_length // self.opt.unit_length) * self.opt.unit_length
         idx = random.randint(0, len(motion) - m_length)
         motion = motion[idx:idx+m_length]
-        # joints = joints[idx:idx+m_length]
+        joints = joints[idx:idx+m_length]
         # motion_length = len(motion)
-        # img_condition = plot_3d_motion(joints)
+        img_condition = torch.from_numpy(plot_3d_motion(joints))
+        # img_condition = torch.rand(3,480,480)
         "Z Normalization"
         motion = (motion - self.mean) / self.std
 
@@ -580,7 +581,7 @@ def plot_3d_motion(joints,title = '', radius=4, plotName = 'newplot.png'):
     if image.shape[2] == 4:  # Check if the image has 4 channels
             image = image[..., :3] 
     image = np.transpose(image, (2, 0, 1))  # Change shape from (480, 480, 3) to (3, 480, 480)
-    image = image[np.newaxis, :]  
+    # image = image[np.newaxis, :]  
     # Close the buffer
     buf.close()
     # image.show()

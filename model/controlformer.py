@@ -26,7 +26,10 @@ class ImageEmbedding(nn.Module):
         # self.cnn.fc = nn.Linear(self.cnn.fc.in_features, output_dim)
         
     def forward(self, x):
-        x = torch.stack(x,axis=0)
+        try:
+            x = torch.stack(x,axis=0)
+        except:
+            print('fed as img not tuple')
         x = x.to(self.device)
         with torch.no_grad(): # We don't need this remove it
             return self.cnn(x)
@@ -109,6 +112,15 @@ class ModifiedTransformerEncoder(nn.Module):
         
         # Iterate over each layer in originalLayers and load the corresponding weights
         for i, layer in enumerate(self.originalLayers):
+            # Construct the keys for the encoder layer's parameters
+            layer_state_dict = {k.replace(f'seqTransEncoder.layers.{i}.', ''): v 
+                                for k, v in state_dict.items() if f'seqTransEncoder.layers.{i}.' in k}
+            layer.load_state_dict(layer_state_dict, strict=True)
+            for param in layer.parameters():
+                param.requires_grad = False
+            
+        # trainable layers should be a copy of the original and then finetuned
+        for i, layer in enumerate(self.trainableLayers):
             # Construct the keys for the encoder layer's parameters
             layer_state_dict = {k.replace(f'seqTransEncoder.layers.{i}.', ''): v 
                                 for k, v in state_dict.items() if f'seqTransEncoder.layers.{i}.' in k}

@@ -36,7 +36,7 @@ class ClearmlPlatform(TrainPlatform):
 class TensorboardPlatform(TrainPlatform):
     def __init__(self, save_dir):
         from torch.utils.tensorboard import SummaryWriter
-        self.writer = SummaryWriter(log_dir=save_dir)
+        self.writer = SummaryWriter(log_dir=save_dir+'/tensorboard')
 
     def report_scalar(self, name, value, iteration, group_name=None):
         self.writer.add_scalar(f'{group_name}/{name}', value, iteration)

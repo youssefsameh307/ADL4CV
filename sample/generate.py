@@ -19,8 +19,13 @@ import shutil
 from data_loaders.tensors import collate
 
 
-def main():
+def main(model_p=None,test_prompt=None):
     args = generate_args()
+    if not model_p == None: 
+        args.model_path = model_p
+    if test_prompt:
+        args.text_prompt = test_prompt
+        
     fixseed(args.seed)
     out_path = args.output_dir
     name = os.path.basename(os.path.dirname(args.model_path))
@@ -123,6 +128,7 @@ def main():
             dump_steps=None,
             noise=None,
             const_noise=False,
+            img_condition=None,
         )
 
         # Recover XYZ *positions* from HumanML3D vector representation
@@ -253,6 +259,8 @@ def load_dataset(args, max_frames, n_frames):
         data.dataset.t2m_dataset.fixed_length = n_frames
     return data
 
+def run_pred(t,s):
+    main(t,s)
 
 if __name__ == "__main__":
     main()
