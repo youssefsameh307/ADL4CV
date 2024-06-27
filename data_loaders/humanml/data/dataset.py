@@ -232,7 +232,7 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-                if len(id_list) > 5000: #TODO change this
+                if len(id_list) > 64: #TODO change this
                     break
         id_list = np.array(id_list) 
 
@@ -581,6 +581,7 @@ def plot_3d_motion(joints,title = '', radius=4, plotName = 'newplot.png'):
     if image.shape[2] == 4:  # Check if the image has 4 channels
             image = image[..., :3] 
     image = np.transpose(image, (2, 0, 1))  # Change shape from (480, 480, 3) to (3, 480, 480)
+    image = image / 255.0
     # image = image[np.newaxis, :]  
     # Close the buffer
     buf.close()

@@ -4,6 +4,7 @@ import os
 import time
 from types import SimpleNamespace
 import numpy as np
+import random
 
 import blobfile as bf
 import torch
@@ -145,6 +146,8 @@ class TrainLoop:
         for epoch in range(self.num_epochs):
             print(f'Starting epoch {epoch}')
             fetch_time = time.time()
+            # self.save()
+            # exit()
             for motion, cond, img_condition in tqdm(self.data):
                 if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                     break
@@ -156,6 +159,8 @@ class TrainLoop:
                 # TODO add the img_cond here
                 # self.model.loadCondition(img_condition)
                 if img_condition is not None:
+                    # if random.random() < 0.5:
+                    #     cond = ''
                     self.run_step(motion, cond, img_condition)
                 else:
                     self.run_step(motion, cond)

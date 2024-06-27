@@ -224,8 +224,7 @@ def load_image():
 
     # Reshape the array to (1, 3, 480, 480)
     img_tensor = torch.tensor(img_array).permute(2, 0, 1).unsqueeze(0)
-
-    print(img_tensor.shape)
+    img_tensor = img_tensor.float()
     # Print tensor shape to verify
     return img_tensor
 

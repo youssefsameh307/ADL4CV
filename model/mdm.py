@@ -95,7 +95,7 @@ class MDM(nn.Module):
 
         self.rot2xyz = Rotation2xyz(device='cpu', dataset=self.dataset)
 
-        weights = torch.load("save/humanml_trans_enc_512/model000200000.pt",map_location=torch.device('cpu'))
+        weights = torch.load("save/humanml_enc_512_50steps/model000750000.pt",map_location=torch.device('cpu'))
         load_model_wo_clip(self,weights)
         
         self.seqTransEncoder = ModifiedTransformerEncoder(num_layers=self.num_layers,
