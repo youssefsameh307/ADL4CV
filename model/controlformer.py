@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import clip
+from transformers import CLIPModel, CLIPProcessor
+import torch
 
 class ZeroConvBlock(nn.Module):
     def __init__(self, input, output):
@@ -34,6 +37,36 @@ class ImageEmbedding(nn.Module):
         with torch.no_grad(): # We don't need this remove it
             return self.cnn(x)
 
+class ImageEmbeddingClip(nn.Module):
+    def __init__(self, device="cuda" if torch.cuda.is_available() else "cpu"):
+        super(ImageEmbeddingClip, self).__init__()
+        self.device = device
+
+        model_name = "openai/clip-vit-base-patch32"  # Choose a suitable model size
+        self.model = CLIPModel.from_pretrained(model_name).to(self.device)  # Explicitly move model to device
+        self.processor = CLIPProcessor.from_pretrained(model_name)
+
+    def preprocess_image(self, image_tensor):
+        inputs = self.processor(images=image_tensor, return_tensors="pt")
+        inputs = inputs.to(self.device)  # Move preprocessed data to device for GPU usage
+        return inputs
+
+    def get_image_embeddings(self, preprocessed_images):
+        with torch.no_grad():  # Disable gradient calculation for efficiency
+            image_features = self.model.get_image_features(**preprocessed_images)
+            print(image_features.shape)
+            return image_features # Access the image embedding tensor
+
+    def forward(self, x):
+        preprocessed_images = self.preprocess_image(x)
+        image_embeddings = self.get_image_embeddings(preprocessed_images)
+        return image_embeddings
+        
+        image = self.preprocessInput(x)
+        with torch.no_grad():
+            image_features = self.model.encode_image(image)
+        
+        return image_features
 
 class ModifiedTransformerEncoder(nn.Module):
     def __init__(self, num_layers, d_model ,nhead ,dim_feedforward ,dropout ,activation
@@ -45,8 +78,9 @@ class ModifiedTransformerEncoder(nn.Module):
         self.dropout = dropout
         self.activation = activation
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.imageEmbedding = ImageEmbedding(self.device)
-        
+        # self.imageEmbedding = ImageEmbedding(self.device)
+        self.imageEmbedding = ImageEmbeddingClip(self.device)
+        self.conditioning_process = nn.Linear(512*3, d_model)
 
         self.inputConv = ZeroConvBlock(d_model, d_model)
 
@@ -83,7 +117,19 @@ class ModifiedTransformerEncoder(nn.Module):
     def forward(self, x, img_condition):
         # Initial processing of the condition
         # x = x.to(self.device)
-        condition_embedding = self.imageEmbedding(img_condition)
+        img_condition = torch.stack(img_condition)
+        batch_size = img_condition.size(0)
+
+        img_conditions = img_condition.view(batch_size * 3, img_condition.size(2), img_condition.size(3), img_condition.size(4))  # Shape: (batch_size * 3, C, H, W)
+
+        
+        
+        embeddings = self.imageEmbedding(img_conditions)  # Shape: (batch_size * 3, 512)
+
+        concatenated_condition = embeddings.view(batch_size, -1)  # Shape: (batch_size, 3 * 512)
+
+        condition_embedding = self.conditioning_process(concatenated_condition)
+
         
         condition_embedding = condition_embedding.view(1, -1).repeat(x.size(0), 1).view(x.size(0), x.size(1), -1)
         # Apply the ZeroConvBlock
@@ -119,9 +165,11 @@ class ModifiedTransformerEncoder(nn.Module):
             for param in layer.parameters():
                 param.requires_grad = False
             
-        # # trainable layers should be a copy of the original and then finetuned
-        # for i, layer in enumerate(self.trainableLayers):
-        #     # Construct the keys for the encoder layer's parameters
-        #     layer_state_dict = {k.replace(f'seqTransEncoder.layers.{i}.', ''): v 
-        #                         for k, v in state_dict.items() if f'seqTransEncoder.layers.{i}.' in k}
-        #     layer.load_state_dict(layer_state_dict, strict=True)
+        # trainable layers should be a copy of the original and then finetuned
+        for i, layer in enumerate(self.trainableLayers):
+            # Construct the keys for the encoder layer's parameters
+            layer_state_dict = {k.replace(f'seqTransEncoder.layers.{i}.', ''): v 
+                                for k, v in state_dict.items() if f'seqTransEncoder.layers.{i}.' in k}
+            layer.load_state_dict(layer_state_dict, strict=True)
+            for param in layer.parameters():
+                param.requires_grad = True

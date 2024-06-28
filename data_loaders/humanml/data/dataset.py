@@ -8,6 +8,9 @@ import codecs as cs
 from tqdm import tqdm
 import spacy
 
+
+import time
+from torchvision.transforms.functional import to_tensor
 import matplotlib.cm as cm
 import random
 
@@ -331,6 +334,10 @@ class Text2MotionDatasetV2(data.Dataset):
         motion, m_length, text_list, img_condition,joints = data['motion'], data['length'], data['text'], data['condition'], data['joints']
         # Randomly select a caption
         text_data = random.choice(text_list)
+        if img_condition != None:
+            if random.random() > 0.5:
+                text_data['caption'] = ''
+                text_data['tokens'] = []
         caption, tokens = text_data['caption'], text_data['tokens']
 
         if len(tokens) < self.opt.max_text_len:
@@ -366,7 +373,13 @@ class Text2MotionDatasetV2(data.Dataset):
         motion = motion[idx:idx+m_length]
         joints = joints[idx:idx+m_length]
         # motion_length = len(motion)
-        img_condition = torch.from_numpy(plot_3d_motion(joints))
+        # loaded_img_condition = torch.from_numpy(plot_3d_motion(joints))
+        start_time = time.time()
+        fi,si,ti = Get_frames(joints)
+        inx = [fi,si,ti]
+        loaded_img_condition = torch.stack(inx)
+        end_time = time.time()
+        print(f"Execution time: {end_time - start_time} seconds")
         # img_condition = torch.rand(3,480,480)
         "Z Normalization"
         motion = (motion - self.mean) / self.std
@@ -379,9 +392,72 @@ class Text2MotionDatasetV2(data.Dataset):
         # print(tokens)
         # go to train_loop and extract img_cond
         # return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
-        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens), img_condition
+        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens), loaded_img_condition
     
 
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+
+def visualize_pose(joints, filename='./conditions/pose.jpg'):
+    """
+    This function visualizes a 22-joint pose with labeled lines between connected joints.
+
+    Args:
+        joints: A numpy array of shape (22, 3) representing joint positions (x, y, z).
+        kinematic_tree: A list of lists representing the parent-child relationships between joints.
+        filename: The filename to save the image (default: './conditions/pose.jpg').
+    """
+    kinematic_tree = [[0, 2, 5, 8, 11], [0, 1, 4, 7, 10], [0, 3, 6, 9, 12, 15], [9, 14, 17, 19, 21], [9, 13, 16, 18, 20]]
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(4.8, 4.8))
+
+    for parent_idx in range(len(kinematic_tree)):
+        for window_start in range(len(kinematic_tree[parent_idx]) - 1):
+            window_end = window_start + 1
+            start_joint = joints[kinematic_tree[parent_idx][window_start]]
+            end_joint = joints[kinematic_tree[parent_idx][window_end]]
+            color = 'k-'
+            if parent_idx == 1 or parent_idx == 4:
+                color = 'r-'
+            ax.plot([start_joint[0], end_joint[0]], [start_joint[1], end_joint[1]], color, alpha=0.7)
+
+    # Set axis limits slightly bigger than joint range for better visualization
+    plt.xlim([joints[:, 0].min()-0.2, joints[:, 0].max()+0.2])
+    plt.ylim([joints[:, 1].min()-0.05, joints[:, 1].max()+0.05])
+    
+    ax.set_axis_off()
+    ax.set_facecolor('white')
+
+    # Convert plot to tensor
+    fig.canvas.draw()
+    image_np = np.array(fig.canvas.renderer.buffer_rgba())
+    image_np = image_np[:, :, :3] / 255.0
+    image_np = image_np / 255.0  # Scale to range [0, 1]
+    image_tensor = to_tensor(image_np).float() 
+    # Convert to tensor (3, 480, 480)
+
+    # # Save the image tensor
+    # plt.savefig(filename, bbox_inches='tight', pad_inches=0.0, dpi=90)  # Save the image as PNG
+
+    plt.close(fig)  # Close the figure to free memory
+
+    return image_tensor
+
+def Get_frames(data):
+    
+    first = int(len(data)*0.1)
+    second = int(len(data)*0.5)
+    third = int(len(data)*0.9)
+    
+    fi = visualize_pose(data[first])
+    si = visualize_pose(data[second])
+    ti = visualize_pose(data[third])
+    return fi,si,ti
 
 
 

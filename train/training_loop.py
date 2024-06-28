@@ -145,7 +145,6 @@ class TrainLoop:
     def run_loop(self):
         for epoch in range(self.num_epochs):
             print(f'Starting epoch {epoch}')
-            fetch_time = time.time()
             # self.save()
             # exit()
             for motion, cond, img_condition in tqdm(self.data):
@@ -160,7 +159,7 @@ class TrainLoop:
                 # self.model.loadCondition(img_condition)
                 if img_condition is not None:
                     # if random.random() < 0.5:
-                    #     cond = ''
+                    #     do sth
                     self.run_step(motion, cond, img_condition)
                 else:
                     self.run_step(motion, cond)
