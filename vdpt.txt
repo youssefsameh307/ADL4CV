@@ -1,41 +1,95 @@
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000000.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000100.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000200.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000300.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000400.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000500.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000600.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000700.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000800.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000000900.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001000.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001100.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001200.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001300.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001400.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001500.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001600.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001700.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001800.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000001900.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002000.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002100.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002200.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002300.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002400.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002500.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002600.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002700.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002800.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000002900.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003000.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003100.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003200.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003300.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003400.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003500.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003600.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003700.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003800.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000003900.pt --text_prompt "the person walked forward"
-python -m sample.generate --model_path ./save/controlformer_5kX4000_step/model000004000.pt --text_prompt "the person walked forward"
+
+python -m eval.eval_humanml --model_path ./save/humanml_trans_enc_512/model000475000.pt
+
+change the train loop to hide the text prompts at 50% of the time
+
+check if the model that is pretrained already works 
+
+check if the model works with zero convs before training outputs the same results
+
+check if condition is being delivered successfully
+
+check if condition matches the input 
+
+double check if the model takes the prompt and time at the correct places 
+
+# in the controlformer.py file
+change the resnet into 2 FCNs
+
+make the data into two conditons a trajectory alone projected on the screen as a 2d plot 
+
+and the pose as a pose from a canonical view 
+
+change the forward method into embedding the pose and the trajectory and then concatenate the two outputs on axis 0 the output dimension should be 512 at the end. can be mapped with a linear layer at the end, input size is 3,480,480
+
+
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control/model000004550.pt --text_prompt "the person runs and skips"
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control/model000006720.pt --text_prompt "a person runs around"
+
+
+python -m sample.generate --model_path ./save/controlformer_resnet_6k/model000002000.pt --text_prompt "the person runs and skips" --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/restnet6k/2000sittingpose"
+
+
+python -m sample.generate --model_path ./save/controlformer_condition_conc/model0000000200.pt --text_prompt "the person runs and skips" --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/restnet6k/2000sittingpose"
+
+
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control/model000006650.pt --text_prompt "a person runs in a circle"
+
+
+a man lifts something on his left and places it down on his right
+a man full-body sideways jumps to his left.
+
+
+
+
+python -m train.train_mdm --save_dir save/control_CNN_weights --diffusion_steps 50 --dataset humanml --train_platform_type TensorboardPlatform --overwrite --num_step 10000
+
+python -m train.train_mdm --save_dir save/controlformer_cnn_factor_conc_map --diffusion_steps 50 --dataset humanml --train_platform_type TensorboardPlatform --overwrite --num_step 4000 --resume_checkpoint "/home/youssefabdelazim307/adl4cv/ADL4CV/save/controlformer_cnn_factor_conc_map/model000001800.pt"
+
+controlformer_cnn_factor_conc_map
+
+
+
+conda env create -f environment.yml
+conda activate mdm2
+python -m spacy download en_core_web_sm
+pip install git+https://github.com/openai/CLIP.git
+
+
+tensorboard --logdir=./save/controlformer_clip_3frames --host=0.0.0.0 --port=6006
+
+tensorboard --logdir=./save/controlformer_cnn_conc_map --host=0.0.0.0 --port=6006
+
+python -m sample.generate --model_path ./save/controlformer_clip_3frames/model000000200.pt --text_prompt "the person walks"
+
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000000000.pt --text_prompt "a person raises his right hand" --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/rightnow/cond" --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/p3s.jpg"
+
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000000000.pt --text_prompt "someone waves with their right hand and then puts their arm back down." --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/rightnow/cond000" --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/p3s.jpg"
+
+
+ python -m sample.generate --model_path ./save/controlformer_condition_conc/model000010000.pt --text_prompt "the person raises one hand in the air and waves" --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/cnn_control_hand_concat/100000_presentation_righthand" --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/a man lifts his right arm above head while bending elbow, then straightening the right elbow, then feeling around for head, and then straightening elbow again,.jpg"
+ 
+ 
+ python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000004000.pt --text_prompt "a person runs in a circle" --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow" --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/pose.jpg"
+
+
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000007000.pt --text_prompt "dance " --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/left" --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/a man walks forward two steps then bends over to catch his breath and starts running,.jpg"
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000007000.pt --text_prompt "dance " --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/box-left hand" --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/person has their left hand up on their head like they bumped it and are walking in a circle.jpg"
+
+
+python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000007000.pt --text_prompt "dance " --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/rightnow/box-left-hand" --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/person has their left hand up on their head like they bumped it and are walking in a circle.jpg"
+
+
+### RIHGT HAND VS LEFT HAND 
+python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/model000007000.pt --text_prompt "a person waves goodbye " --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/presentation-candidates/wave-left-hand" --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/a person raises their left arm and waves their hand side to side..jpg"
+
+python -m sample.generate --model_path ./save/control_CNN_weights/model000005000.pt --text_prompt "a person walks forward, moving his hands " --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/raiseslefthand.jpg" --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/raiseslefthand.jpg" --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/raiseslefthand.jpg"
+
+

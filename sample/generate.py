@@ -8,7 +8,7 @@ import os
 import numpy as np
 import torch
 from utils.parser_util import generate_args
-from utils.model_util import create_model_and_diffusion, load_model_wo_clip
+from utils.model_util import create_model_and_diffusion,create_model_and_diffusion_v2, load_model_wo_clip
 from utils import dist_util
 from model.cfg_sampler import ClassifierFreeSampleModel
 from data_loaders.get_data import get_dataset_loader
@@ -17,7 +17,7 @@ import data_loaders.humanml.utils.paramUtil as paramUtil
 from data_loaders.humanml.utils.plot_script import plot_3d_motion
 import shutil
 from data_loaders.tensors import collate
-
+import shutil
 from PIL import Image
 import numpy as np
 import torch
@@ -28,8 +28,8 @@ def main(model_p=None,test_prompt=None):
         args.model_path = model_p
     if test_prompt:
         args.text_prompt = test_prompt
-        
-    # fixseed(args.seed)
+    
+    fixseed(args.seed)
     out_path = args.output_dir
     name = os.path.basename(os.path.dirname(args.model_path))
     niter = os.path.basename(args.model_path).replace('model', '').replace('.pt', '')
@@ -79,6 +79,7 @@ def main(model_p=None,test_prompt=None):
     total_num_samples = args.num_samples * args.num_repetitions
 
     print("Creating model and diffusion...")
+    #TODO change the chosen model based on the args inside this method or here 
     model, diffusion = create_model_and_diffusion(args, data)
 
     print(f"Loading checkpoints from [{args.model_path}]...")
@@ -119,20 +120,54 @@ def main(model_p=None,test_prompt=None):
 
         sample_fn = diffusion.p_sample_loop
 
-        sample = sample_fn(
-            model,
-            # (args.batch_size, model.njoints, model.nfeats, n_frames),  # BUG FIX - this one caused a mismatch between training and inference
-            (args.batch_size, model.njoints, model.nfeats, max_frames),  # BUG FIX
-            clip_denoised=False,
-            model_kwargs=model_kwargs,
-            skip_timesteps=0,  # 0 is the default value - i.e. don't skip any step
-            init_image=None,
-            progress=True,
-            dump_steps=None,
-            noise=None,
-            const_noise=False,
-            img_condition = load_image()
-        )
+        imagePath = args.cond_path
+        imagePath2 = args.cond_path2
+        imagePath3 = args.cond_path3
+        p1 = load_image(imagePath)
+        p2 = load_image(imagePath2) 
+        p3 = load_image(imagePath3) 
+        firstweight = create_quadratic_pattern(196,0.25*196)
+        secondweight = create_quadratic_pattern(196,0.5*196)
+        thirdweight = create_quadratic_pattern(196,0.75*196)
+        
+        print(firstweight)
+        print(secondweight)
+        print(thirdweight)
+        print(p1.max())
+        print(p1.min())
+        print(p1.mean())
+        print(p1.norm())
+        
+        if args.model_arch == 'mdmperfect2':
+            sample = sample_fn(
+                model,
+                # (args.batch_size, model.njoints, model.nfeats, n_frames),  # BUG FIX - this one caused a mismatch between training and inference
+                (args.batch_size, model.njoints, model.nfeats, max_frames),  # BUG FIX
+                clip_denoised=False,
+                model_kwargs=model_kwargs,
+                skip_timesteps=0,  # 0 is the default value - i.e. don't skip any step
+                init_image=None,
+                progress=True,
+                dump_steps=None,
+                noise=None,
+                const_noise=False,
+                img_condition = [torch.stack([p1,p2,p3])]
+            )
+        elif args.model_arch == 'mdm3' or args.model_arch == 'mdm' :
+            sample = sample_fn(
+                model,
+                # (args.batch_size, model.njoints, model.nfeats, n_frames),  # BUG FIX - this one caused a mismatch between training and inference
+                (args.batch_size, model.njoints, model.nfeats, max_frames),  # BUG FIX
+                clip_denoised=False,
+                model_kwargs=model_kwargs,
+                skip_timesteps=0,  # 0 is the default value - i.e. don't skip any step
+                init_image=None,
+                progress=True,
+                dump_steps=None,
+                noise=None,
+                const_noise=False,
+                img_condition = [p1]
+            )
 
         # Recover XYZ *positions* from HumanML3D vector representation
         if model.data_rep == 'hml_vec':
@@ -167,6 +202,10 @@ def main(model_p=None,test_prompt=None):
     if os.path.exists(out_path):
         shutil.rmtree(out_path)
     os.makedirs(out_path)
+
+    condName = args.cond_path.split('/')[-1].replace('.jpg','')
+    # out_path = os.path.join(out_path, f'{condName}-')
+    print(out_path, condName)
 
     npy_path = os.path.join(out_path, 'results.npy')
     print(f"saving results file to [{npy_path}]")
@@ -207,9 +246,8 @@ def main(model_p=None,test_prompt=None):
     abs_path = os.path.abspath(out_path)
     print(f'[Done] Results are at [{abs_path}]')
 
-def load_image():
+def load_image(img_path):
     # Load the image
-    img_path = '/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/newplot.png'
     img = Image.open(img_path)
 
     # Check if the image has an alpha channel
@@ -220,14 +258,35 @@ def load_image():
     img_resized = img.resize((480, 480))
 
     # Convert PIL image to NumPy array
-    img_array = np.array(img_resized)
+    img_array = np.array(img_resized) / 255.0
 
     # Reshape the array to (1, 3, 480, 480)
-    img_tensor = torch.tensor(img_array).permute(2, 0, 1).unsqueeze(0)
-    img_tensor = img_tensor.float() / 255.0
-    # Print tensor shape to verify
+    img_tensor = torch.tensor(img_array).permute(2, 0, 1)
+    img_tensor = (img_tensor.float()) # / 255.0 for older models
     return img_tensor
 
+
+def create_quadratic_pattern(length, index):
+    if index < 0 or index >= length:
+        raise ValueError("Index must be within the array bounds")
+    
+    pattern = torch.zeros(length)
+    # max_distance = max(index, length - index - 1)  # maximum distance to the edges
+    
+    
+    for i in range(length):
+        if i >=index:
+            max_distance = length-index-1
+        else:
+            max_distance = index
+        
+        if index == -1:
+            pattern[i] = 0
+        distance = abs(i - index)
+        pattern[i] = 1 - (distance / max_distance)**2
+    
+    pattern = torch.clamp(pattern, 0, 1)  # Ensure values are within [0, 1]
+    return pattern  # Return as a PyTorch tensor
 
 def save_multiple_samples(args, out_path, row_print_template, all_print_template, row_file_template, all_file_template,
                           caption, num_samples_in_out_file, rep_files, sample_files, sample_i):

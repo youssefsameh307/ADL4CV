@@ -1,4 +1,7 @@
 from model.mdm import MDM
+from model.mdm3 import MDM as MDM3
+from model.mdmperfect import MDM as MDMPerfect
+from model.mdmperfect2 import MDM as MDMPerfect2
 from diffusion import gaussian_diffusion as gd
 from diffusion.respace import SpacedDiffusion, space_timesteps
 from utils.parser_util import get_cond_mode
@@ -7,14 +10,27 @@ from utils.parser_util import get_cond_mode
 def load_model_wo_clip(model, state_dict):
     missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
     assert len(unexpected_keys) == 0
-    assert all([k.startswith('clip_model.') for k in missing_keys])
+    # assert all([k.startswith('clip_model.') for k in missing_keys])
 
 
 def create_model_and_diffusion(args, data):
-    model = MDM(**get_model_args(args, data))
+    if args.model_arch == 'mdm':
+        model = MDM(**get_model_args(args, data))
+    elif args.model_arch == 'mdm3':
+        model = MDM3(**get_model_args(args, data))
+    elif args.model_arch == 'mdmperfect2':
+        model = MDMPerfect2(**get_model_args(args, data))
+    else:
+        ValueError('Unknown model architecture')
     diffusion = create_gaussian_diffusion(args)
     return model, diffusion
 
+def create_model_and_diffusion_v2(args, data):
+    # model = MDM(**get_model_args(args, data))
+    model = MDM3(**get_model_args(args, data))
+    # model = MDMPerfect(**get_model_args(args, data))
+    diffusion = create_gaussian_diffusion(args)
+    return model, diffusion
 
 def get_model_args(args, data):
 

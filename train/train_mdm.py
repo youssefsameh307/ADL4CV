@@ -31,7 +31,6 @@ def main():
         json.dump(vars(args), fw, indent=4, sort_keys=True)
 
     dist_util.setup_dist(args.device)
-
     print("creating data loader...")
     data = get_dataset_loader(name=args.dataset, batch_size=args.batch_size, num_frames=args.num_frames)
 

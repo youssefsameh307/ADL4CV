@@ -119,6 +119,14 @@ def main(model_p=None,test_prompt=None):
 
         sample_fn = diffusion.p_sample_loop
 
+
+        # p1 = load_image('/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/p1.jpg')
+        p3 = load_image('/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/p3.jpg')
+        # p3 = load_image('/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/p3.jpg')
+        
+        # print(torch.stack((p1, p2, p3)).shape)
+        # img_condition = [torch.stack((p1, p2, p3))]
+        
         sample = sample_fn(
             model,
             # (args.batch_size, model.njoints, model.nfeats, n_frames),  # BUG FIX - this one caused a mismatch between training and inference
@@ -131,7 +139,7 @@ def main(model_p=None,test_prompt=None):
             dump_steps=None,
             noise=None,
             const_noise=False,
-            img_condition = load_image()
+            img_condition = [p3]
         )
 
         # Recover XYZ *positions* from HumanML3D vector representation
@@ -207,9 +215,8 @@ def main(model_p=None,test_prompt=None):
     abs_path = os.path.abspath(out_path)
     print(f'[Done] Results are at [{abs_path}]')
 
-def load_image():
+def load_image(img_path):
     # Load the image
-    img_path = '/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/newplot.png'
     img = Image.open(img_path)
 
     # Check if the image has an alpha channel
@@ -223,9 +230,8 @@ def load_image():
     img_array = np.array(img_resized)
 
     # Reshape the array to (1, 3, 480, 480)
-    img_tensor = torch.tensor(img_array).permute(2, 0, 1).unsqueeze(0)
-    img_tensor = img_tensor.float()
-    # Print tensor shape to verify
+    img_tensor = torch.tensor(img_array).permute(2, 0, 1)
+    img_tensor = img_tensor.float() / 255.0
     return img_tensor
 
 

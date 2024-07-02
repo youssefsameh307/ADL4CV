@@ -15,7 +15,6 @@ from train.train_platforms import ClearmlPlatform, TensorboardPlatform, NoPlatfo
 
 def main():
     args = train_args()
-    args.seed=10
     fixseed(args.seed)
     train_platform_type = eval(args.train_platform_type)
     train_platform = train_platform_type(args.save_dir)
@@ -32,7 +31,6 @@ def main():
         json.dump(vars(args), fw, indent=4, sort_keys=True)
 
     dist_util.setup_dist(args.device)
-    args.batch_size = 16 # TODO remove this line
     print("creating data loader...")
     data = get_dataset_loader(name=args.dataset, batch_size=args.batch_size, num_frames=args.num_frames)
 

@@ -53,14 +53,21 @@ class MDM(nn.Module):
         self.sequence_pos_encoder = PositionalEncoding(self.latent_dim, self.dropout)
         self.emb_trans_dec = emb_trans_dec
         
-        self.condition_zero_conv = ZeroConvBlock(self.latent_dim, self.latent_dim)
+        self.linearLayerNorm = nn.LayerNorm(self.input_feats)
+        
+        self.condition_zero_conv = ZeroConvBlock(512, self.latent_dim)
+        
+        self.condition_in_zero_conv = ZeroConvBlock(512, self.input_feats)
+        
         self.transformerZeroConv = ZeroConvBlock(self.latent_dim, self.latent_dim)
         self.outputZeroConv = ZeroConvBlock(self.latent_dim, self.input_feats)
 
         # self.imageEmbeddingCNN = ImageEmbeddingCNN(embedding_size=nfeats)
         # self.imageEmbeddingClip = ImageEmbeddingClip()
         # self.imageEmbeddingResnet = ImageEmbedding(njoints*nfeats)
-        self.imageEmbeddingCNN = SimpleCNN()
+        self.imageEmbeddingCNN = SimpleCNN(output_dim=512)
+        
+        self.imageEmbeddingCNN263 = SimpleCNN(output_dim=512)
         
         for param in self.imageEmbeddingCNN.parameters():
             param.requires_grad = True
@@ -194,7 +201,7 @@ class MDM(nn.Module):
         """
         bs, njoints, nfeats, nframes = x.shape
         emb = self.embed_timestep(timesteps)  # [1, bs, d]
-
+        
         force_mask = y.get('uncond', False)
         if 'text' in self.cond_mode:
             if 'text_embed' in y.keys():  # caching option
@@ -215,9 +222,20 @@ class MDM(nn.Module):
         
         
         # TODO add conditioning here 
-        
-        x = self.input_process(x)
+    
+        img_condition = torch.stack(img_condition)
+        img_embed = self.imageEmbeddingCNN(img_condition) # size 512
+        img_embed = img_embed.unsqueeze(0)
 
+        img_embed = self.condition_in_zero_conv(img_embed.permute(1, 2, 0))  # 263
+        img_embed = img_embed.unsqueeze(-1)
+        img_embed = img_embed.repeat(1, 1, 1, nframes)
+        img_embed = self.linearLayerNorm(img_embed.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        
+        x_control = x + img_embed
+        x = self.input_process(x)
+        x_control = self.input_trainable_process(x_control)
+        
         if self.arch == 'trans_enc':
             # adding the timestep embed
             
@@ -225,14 +243,10 @@ class MDM(nn.Module):
             xseq = self.sequence_pos_encoder(xseq)  # [seqlen+1, bs, d]
             output = self.seqTransEncoder(xseq)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
-            img_condition = torch.stack(img_condition)
-            img_embed = self.imageEmbeddingCNN(img_condition) # size 512
-            img_embed = img_embed.unsqueeze(0)
-
-            img_embed = self.condition_zero_conv(img_embed.permute(1, 2, 0)).permute(2, 0, 1) 
             
-            emb_for_trainable = emb + img_embed
-            xseq_trainable = torch.cat((emb_for_trainable, x), axis=0)  # [seqlen+1, bs, d]
+            
+            # emb_for_trainable = emb + img_embed
+            xseq_trainable = torch.cat((emb, x_control), axis=0)  # [seqlen+1, bs, d]
             xseq_trainable = self.sequence_pos_encoder(xseq_trainable)  # [seqlen+1, bs, d]
             output_trainable = self.seqTrainableTransEncoder(xseq_trainable)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
@@ -258,7 +272,7 @@ class MDM(nn.Module):
         # print(var1.shape)
         # print(x.shape)
         # print(output.shape)
-        # output = output + self.outputZeroConv(x.permute(1, 2, 0)).unsqueeze(2) # TODO add this later
+        output = output + self.outputZeroConv(x_control.permute(1, 2, 0)).unsqueeze(2) # TODO add this later
         return output
 
 
@@ -379,3 +393,4 @@ def load_model_wo_clip(model, state_dict):
     missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
     assert len(unexpected_keys) == 0
     # assert all([k.startswith('clip_model.') for k in missing_keys])
+    

@@ -17,14 +17,18 @@ class ZeroConvBlock(nn.Module):
         return self.conv(x)
 
 class ImageEmbedding(nn.Module):
-    def __init__(self,device):
+    def __init__(self,device,output_dim=512):
         super(ImageEmbedding, self).__init__()
         # You can replace this with any other suitable architecture
         self.device = device
         cachedResnet = models.resnet18(pretrained=True)
         for param in cachedResnet.parameters():
-            param.requires_grad = False 
-        cachedResnet.fc = nn.Identity()
+            param.requires_grad = False
+        cachedResnet.fc = nn.Linear(512, output_dim)
+        for param in cachedResnet.fc.parameters():
+            param.requires_grad = True
+            
+        # cachedResnet.fc = nn.Identity()
         self.cnn = cachedResnet
         # self.cnn.fc = nn.Linear(self.cnn.fc.in_features, output_dim)
         
@@ -34,8 +38,90 @@ class ImageEmbedding(nn.Module):
         except:
             x=x
         x = x.to(self.device)
-        with torch.no_grad(): # We don't need this remove it
-            return self.cnn(x)
+        return self.cnn(x)
+    
+import torch.nn.functional as F
+
+class SimpleCNN(nn.Module):
+        def __init__(self, input_shape=(480, 480, 3), output_dim=512, device='cuda'):
+            super(SimpleCNN, self).__init__()
+            self.device = device
+            # Convolutional layers with pooling and batch normalization
+            self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=7, stride=2, padding=3) # 480x480x3 -> 240x240x32
+            self.bn1 = nn.BatchNorm2d(32)
+            
+            self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2) # 240x240x32 -> 120x120x64
+            self.bn2 = nn.BatchNorm2d(64)
+            
+            self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1) # 120x120x64 -> 60x60x128
+            self.bn3 = nn.BatchNorm2d(128)
+            
+            self.conv4 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, padding=1) # 60x60x128 -> 30x30x256
+            self.bn4 = nn.BatchNorm2d(256)
+            
+            self.conv5 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, padding=1) # 30x30x256 -> 15x15x512
+            self.bn5 = nn.BatchNorm2d(512)
+            
+            # Global average pooling layer
+            self.global_avg_pool = nn.AdaptiveAvgPool2d((3, 3))
+            
+            # Fully connected layer
+            self.fc = nn.Linear(512 * 3 * 3, output_dim)
+            
+        def forward(self, x):
+            x = x.to(self.device)
+            # Convolutional layers with ReLU activations, batch normalization, and pooling
+            x = F.relu(self.bn1(self.conv1(x)))
+            
+            x = F.relu(self.bn2(self.conv2(x)))
+            
+            x = F.relu(self.bn3(self.conv3(x)))
+            
+            x = F.relu(self.bn4(self.conv4(x)))
+            
+            x = F.relu(self.bn5(self.conv5(x)))
+            x = self.global_avg_pool(x)
+
+            # Flatten the output
+            x = x.view(x.size(0), -1)
+            
+            # Fully connected layer
+            x = self.fc(x)
+            
+            return x
+
+
+class ImageEmbeddingCNN(nn.Module):
+    def __init__(self, device, input_channels=3, embedding_size=512):
+        super(ImageEmbeddingCNN, self).__init__()
+        self.input_channels = input_channels
+        self.embedding_size = embedding_size
+        self.device = device
+        self.features = nn.Sequential(
+            # Convolutional Block 1
+            nn.Conv2d(input_channels, 16, kernel_size=4, stride=2, padding=0),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            # Convolutional Block 2
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=4),
+        )
+        
+        # Fully Connected Layers
+        self.fc = nn.Sequential(
+            nn.Linear(32 * 30 * 30, self.embedding_size),  # Adjust the input size based on your image dimensions after convolutions
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x):
+        x = x.to(self.device)
+        features = self.features(x)
+        features = features.view(features.size(0), -1)  # Flatten the feature map
+        embedding = self.fc(features)
+        return embedding
+
 
 class ImageEmbeddingClip(nn.Module):
     def __init__(self, device="cuda" if torch.cuda.is_available() else "cpu"):
@@ -54,7 +140,6 @@ class ImageEmbeddingClip(nn.Module):
     def get_image_embeddings(self, preprocessed_images):
         with torch.no_grad():  # Disable gradient calculation for efficiency
             image_features = self.model.get_image_features(**preprocessed_images)
-            print(image_features.shape)
             return image_features # Access the image embedding tensor
 
     def forward(self, x):
@@ -114,10 +199,28 @@ class ModifiedTransformerEncoder(nn.Module):
         self.image_condition = condition.to(self.device)
         # self.image_condition = condition
 
+
+    # def forward(self....): # logic for CNN
+    #     # x = x.to(self.device)
+    #     img_condition = torch.stack(img_condition)
+    #     batch_size = img_condition.size(0)
+
+    #     img_conditions = img_condition.view(batch_size * 3, img_condition.size(2), img_condition.size(3), img_condition.size(4))  # Shape: (batch_size * 3, C, H, W)
+
+        
+        
+    #     embeddings = self.imageEmbedding(img_conditions)  # Shape: (batch_size * 3, 512)
+
+    #     concatenated_condition = embeddings.view(batch_size, -1)  # Shape: (batch_size, 3 * 512)
+
+    #     condition_embedding = self.conditioning_process(concatenated_condition)
+    #       ...rest of the code
+
     def forward(self, x, img_condition):
         # Initial processing of the condition
         # x = x.to(self.device)
         img_condition = torch.stack(img_condition)
+        
         batch_size = img_condition.size(0)
 
         img_conditions = img_condition.view(batch_size * 3, img_condition.size(2), img_condition.size(3), img_condition.size(4))  # Shape: (batch_size * 3, C, H, W)

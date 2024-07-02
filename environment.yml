@@ -1,4 +1,4 @@
-name: mdm
+name: mdm2
 channels:
   - pytorch
   - anaconda

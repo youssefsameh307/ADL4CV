@@ -235,7 +235,7 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-                if len(id_list) > 64: #TODO change this
+                if len(id_list) == 45000: #TODO change this
                     break
         id_list = np.array(id_list) 
 
@@ -250,11 +250,6 @@ class Text2MotionDatasetV2(data.Dataset):
             try:
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
                 joints = np.load(pjoin(joints_dir, name + '.npy'))
-                ## TODO remove these when evaluating
-                # image = Image.open(conditions_dir + '/' + name + '.png')
-                # img_data = np.array(image)
-                # img_data = img_data / 255.0
-                img_data = torch.randn(3, 480, 480) 
 
                 if (len(motion)) < min_motion_len or (len(motion) >= 200):
                     continue
@@ -286,7 +281,7 @@ class Text2MotionDatasetV2(data.Dataset):
                                     new_name = random.choice('ABCDEFGHIJKLMNOPQRSTUVW') + '_' + name
                                 data_dict[new_name] = {'motion': n_motion,
                                                     'joints': joints,
-                                                    'condition': img_data,
+                                                    # 'condition': img_data,
                                                     'length': len(n_motion),
                                                     'text':[text_dict]}
                                 new_name_list.append(new_name)
@@ -299,7 +294,7 @@ class Text2MotionDatasetV2(data.Dataset):
                 if flag:
                     data_dict[name] = {'motion': motion,
                                        'joints': joints,
-                                       'condition': img_data,
+                                    #    'condition': img_data,
                                        'length': len(motion),
                                        'text': text_data}
                     new_name_list.append(name)
@@ -331,13 +326,13 @@ class Text2MotionDatasetV2(data.Dataset):
     def __getitem__(self, item):
         idx = self.pointer + item
         data = self.data_dict[self.name_list[idx]]
-        motion, m_length, text_list, img_condition,joints = data['motion'], data['length'], data['text'], data['condition'], data['joints']
+        motion, m_length, text_list, joints = data['motion'], data['length'], data['text'], data['joints']
         # Randomly select a caption
         text_data = random.choice(text_list)
-        if img_condition != None:
-            if random.random() > 0.5:
-                text_data['caption'] = ''
-                text_data['tokens'] = []
+        # og_caption = text_data['caption']
+        if random.random() > 0.7:
+            text_data['caption'] = ''
+            text_data['tokens'] = []
         caption, tokens = text_data['caption'], text_data['tokens']
 
         if len(tokens) < self.opt.max_text_len:
@@ -374,15 +369,19 @@ class Text2MotionDatasetV2(data.Dataset):
         joints = joints[idx:idx+m_length]
         # motion_length = len(motion)
         # loaded_img_condition = torch.from_numpy(plot_3d_motion(joints))
-        start_time = time.time()
-        fi,si,ti = Get_frames(joints)
-        inx = [fi,si,ti]
-        loaded_img_condition = torch.stack(inx)
-        end_time = time.time()
-        print(f"Execution time: {end_time - start_time} seconds")
+        si = Get_frames(joints)
+        # inx = [fi,si,ti]
+        # loaded_img_condition = torch.stack(inx)
+        
+        loaded_img_condition = si
+        
+
+        
         # img_condition = torch.rand(3,480,480)
         "Z Normalization"
         motion = (motion - self.mean) / self.std
+
+
 
         if m_length < self.max_motion_length:
             motion = np.concatenate([motion,
@@ -437,7 +436,7 @@ def visualize_pose(joints, filename='./conditions/pose.jpg'):
     fig.canvas.draw()
     image_np = np.array(fig.canvas.renderer.buffer_rgba())
     image_np = image_np[:, :, :3] / 255.0
-    image_np = image_np / 255.0  # Scale to range [0, 1]
+    # image_np = image_np / 255.0  # Scale to range [0, 1]
     image_tensor = to_tensor(image_np).float() 
     # Convert to tensor (3, 480, 480)
 
@@ -449,20 +448,63 @@ def visualize_pose(joints, filename='./conditions/pose.jpg'):
     return image_tensor
 
 def Get_frames(data):
+    firstKeyFrame = 0.25 + (random.random() - 0.5) * 0.2
+    seconKeyFrame = 0.5 + (random.random() - 0.5) * 0.2
+    thirdKeyFrame = 0.75 + (random.random() - 0.5) * 0.2
     
-    first = int(len(data)*0.1)
-    second = int(len(data)*0.5)
-    third = int(len(data)*0.9)
+    first = int(len(data)*firstKeyFrame)
+    second = int(len(data)*seconKeyFrame)
+    third = int(len(data)*thirdKeyFrame)
     
     fi = visualize_pose(data[first])
     si = visualize_pose(data[second])
     ti = visualize_pose(data[third])
-    return fi,si,ti
+    
+    firstIndex = int(firstKeyFrame * 196)
+    secondIndex = int(seconKeyFrame * 196)
+    thirdIndex = int(thirdKeyFrame * 196)
+    
+    if random.random() > 0.5:
+        randomChoice = random.choice([0,1,2])
+        if randomChoice == 0:
+            firstIndex = 0
+        elif randomChoice == 1:
+            secondIndex = 0
+        else:
+            thirdIndex = 0
+    
+    # firstweight = create_quadratic_pattern(196,firstIndex)
+    # secondweight = create_quadratic_pattern(196,secondIndex)
+    # thirdweight = create_quadratic_pattern(196,thirdIndex)
+    
+    return torch.stack([fi,si,ti])
 
 
 
 
 ###start of plot_3d_motion
+
+def create_quadratic_pattern(length, index):
+    if index < 0 or index >= length:
+        raise ValueError("Index must be within the array bounds")
+    
+    pattern = torch.zeros(length)
+    # max_distance = max(index, length - index - 1)  # maximum distance to the edges
+    
+    
+    for i in range(length):
+        if i >=index:
+            max_distance = length-index-1
+        else:
+            max_distance = index
+        
+        if index == -1:
+            pattern[i] = 0
+        distance = abs(i - index)
+        pattern[i] = 1 - (distance / max_distance)**2
+    
+    pattern = torch.clamp(pattern, 0, 1)  # Ensure values are within [0, 1]
+    return pattern  # Return as a PyTorch tensor
 
 def plot_3d_motion(joints,title = '', radius=4, plotName = 'newplot.png'):
 #     matplotlib.use('Agg')

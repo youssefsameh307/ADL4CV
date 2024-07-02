@@ -80,7 +80,6 @@ class ModifiedTransformerEncoder(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # self.imageEmbedding = ImageEmbedding(self.device)
         self.imageEmbedding = ImageEmbeddingClip(self.device)
-        self.conditioning_process = nn.Linear(512*3, d_model)
 
         self.inputConv = ZeroConvBlock(d_model, d_model)
 
@@ -117,20 +116,7 @@ class ModifiedTransformerEncoder(nn.Module):
     def forward(self, x, img_condition):
         # Initial processing of the condition
         # x = x.to(self.device)
-        img_condition = torch.stack(img_condition)
-        
-        batch_size = img_condition.size(0)
-
-        img_conditions = img_condition.view(batch_size * 3, img_condition.size(2), img_condition.size(3), img_condition.size(4))  # Shape: (batch_size * 3, C, H, W)
-
-        
-        
-        embeddings = self.imageEmbedding(img_conditions)  # Shape: (batch_size * 3, 512)
-
-        concatenated_condition = embeddings.view(batch_size, -1)  # Shape: (batch_size, 3 * 512)
-
-        condition_embedding = self.conditioning_process(concatenated_condition)
-
+        condition_embedding = self.imageEmbedding(img_condition)
         
         condition_embedding = condition_embedding.view(1, -1).repeat(x.size(0), 1).view(x.size(0), x.size(1), -1)
         # Apply the ZeroConvBlock
@@ -152,6 +138,8 @@ class ModifiedTransformerEncoder(nn.Module):
             convOutput = convBlock(trainableOutput.permute(1, 2, 0)).permute(2, 0, 1)
             
             originalOutput = originalIntermediate + convOutput
+            if i == len(self.trainableLayers) -1:
+                return originalIntermediate + convOutput
         
         return originalOutput
     
