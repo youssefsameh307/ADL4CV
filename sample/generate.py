@@ -130,13 +130,13 @@ def main(model_p=None,test_prompt=None):
         secondweight = create_quadratic_pattern(196,0.5*196)
         thirdweight = create_quadratic_pattern(196,0.75*196)
         
-        print(firstweight)
-        print(secondweight)
-        print(thirdweight)
-        print(p1.max())
-        print(p1.min())
-        print(p1.mean())
-        print(p1.norm())
+        # print(firstweight)
+        # print(secondweight)
+        # print(thirdweight)
+        # print(p1.max())
+        # print(p1.min())
+        # print(p1.mean())
+        # print(p1.norm())
         
         if args.model_arch == 'mdmperfect2':
             sample = sample_fn(
@@ -168,7 +168,9 @@ def main(model_p=None,test_prompt=None):
                 const_noise=False,
                 img_condition = [p1]
             )
-
+        print("shape before transformation: ",sample.shape)
+        
+        #TODO IMPORTANT this is how we transform the output from 263 motion descriptors to xyz
         # Recover XYZ *positions* from HumanML3D vector representation
         if model.data_rep == 'hml_vec':
             n_joints = 22 if sample.shape[1] == 263 else 21
@@ -178,10 +180,11 @@ def main(model_p=None,test_prompt=None):
 
         rot2xyz_pose_rep = 'xyz' if model.data_rep in ['xyz', 'hml_vec'] else model.data_rep
         rot2xyz_mask = None if rot2xyz_pose_rep == 'xyz' else model_kwargs['y']['mask'].reshape(args.batch_size, n_frames).bool()
+        
         sample = model.rot2xyz(x=sample, mask=rot2xyz_mask, pose_rep=rot2xyz_pose_rep, glob=True, translation=True,
                                jointstype='smpl', vertstrans=True, betas=None, beta=0, glob_rot=None,
                                get_rotations_back=False)
-
+        print("shape after transformation: ",sample.shape)
         if args.unconstrained:
             all_text += ['unconstrained'] * args.num_samples
         else:

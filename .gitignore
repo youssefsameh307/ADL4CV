@@ -5,6 +5,12 @@ __pycache__/
 
 # C extensions
 *.so
+*.jpg 
+*.png
+*.mp4
+*.txt
+*.npy
+*.gif
 
 # Distribution / packaging
 .Python
@@ -33,7 +39,7 @@ body_models/
 glove*
 exp/
 dataset*
-
+conditions/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

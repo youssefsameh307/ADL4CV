@@ -233,8 +233,12 @@ class Text2MotionDatasetV2(data.Dataset):
         data_dict = {}
         id_list = []
         with cs.open(split_file, 'r') as f:
+            print('len(f.readlines()):', len(list(f.readlines())))
+
             for line in f.readlines():
                 id_list.append(line.strip())
+                print('len(id_list):', len(id_list))
+                print('len(f.readlines()):', len(list(f.readlines())))
                 if len(id_list) == 45000: #TODO change this
                     break
         id_list = np.array(id_list) 
