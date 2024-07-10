@@ -225,16 +225,27 @@ class MDM(nn.Module):
             xseq = self.sequence_pos_encoder(xseq)  # [seqlen+1, bs, d]
             output = self.seqTransEncoder(xseq)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
-            img_condition = torch.stack(img_condition)
-            img_embed = self.imageEmbeddingCNN(img_condition) # size 512
+            
+            # img_condition = torch.stack(img_condition) 
+            # imgs = img_condition[:, 0, :, :, :]
+            # imgs = [cond[0] for cond in img_condition]
+            
+            # indicies = img_condition[:, 1, :]
+            
+            imgs = torch.stack(img_condition)
+            number_of_images = imgs.shape[1]
+            imgs = imgs.reshape(-1,imgs.shape[2],imgs.shape[3],imgs.shape[4])
+            imgs = imgs.permute(0,3,1,2)
+            
+            img_embed = self.imageEmbeddingCNN(imgs) # size 512
             img_embed = img_embed.unsqueeze(0)
 
             img_embed = self.condition_zero_conv(img_embed.permute(1, 2, 0)).permute(2, 0, 1) 
             
-            emb_for_trainable = emb + img_embed
-            xseq_trainable = torch.cat((emb_for_trainable, x), axis=0)  # [seqlen+1, bs, d]
+            img_embed = img_embed.reshape(number_of_images,-1,img_embed.shape[2])
+            xseq_trainable = torch.cat((emb, x, img_embed), axis=0)  # [seqlen+1, bs, d]
             xseq_trainable = self.sequence_pos_encoder(xseq_trainable)  # [seqlen+1, bs, d]
-            output_trainable = self.seqTrainableTransEncoder(xseq_trainable)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
+            output_trainable = self.seqTrainableTransEncoder(xseq_trainable)[1:-1 * number_of_images]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
             output = output + self.transformerZeroConv(output_trainable.permute(1, 2, 0)).permute(2, 0, 1)
         elif self.arch == 'trans_dec':

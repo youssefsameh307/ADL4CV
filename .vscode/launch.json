@@ -40,7 +40,7 @@
             // ],
             "args": "${command:pickArgs}",
             "justMyCode": false,
-            "python": "/home/youssefabdelazim307/anaconda3/envs/mdm2/bin/python",
+            "python": "/home/youssefabdelazim307/anaconda3/envs/mdmneu/bin/python",
             // "env": {
             //     "PYDEVD_WARN_EVALUATION_TIMEOUT": "1000"
             // },

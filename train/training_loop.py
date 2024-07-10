@@ -147,7 +147,7 @@ class TrainLoop:
             print(f'Starting epoch {epoch}')
             # self.save()
             # exit()
-            for motion, cond, img_condition in tqdm(self.data):
+            for motion, cond, img_condition, indicies in tqdm(self.data):
                 if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                     break
                 
@@ -160,7 +160,7 @@ class TrainLoop:
                 if img_condition is not None:
                     # if random.random() < 0.5:
                     #     do sth
-                    self.run_step(motion, cond, img_condition)
+                    self.run_step(motion, cond, img_condition,indicies)
                 else:
                     self.run_step(motion, cond)
                 if self.step % self.log_interval == 0:
@@ -236,13 +236,13 @@ class TrainLoop:
         print(f'Evaluation time: {round(end_eval-start_eval)/60}min')
 
 
-    def run_step(self, batch, cond, img_condition=None):
-        self.forward_backward(batch, cond, img_condition)
+    def run_step(self, batch, cond, img_condition=None,indicies=None):
+        self.forward_backward(batch, cond, img_condition,indicies)
         self.mp_trainer.optimize(self.opt)
         self._anneal_lr()
         self.log_step()
 
-    def forward_backward(self, batch, cond, img_condition=None):
+    def forward_backward(self, batch, cond, img_condition=None,indicies=None):
         self.mp_trainer.zero_grad()
         for i in range(0, batch.shape[0], self.microbatch):
             # Eliminates the microbatch feature
@@ -260,7 +260,8 @@ class TrainLoop:
                 t,  # [bs](int) sampled timesteps
                 model_kwargs=micro_cond,
                 dataset=self.data.dataset,
-                img_condition=img_condition
+                img_condition=img_condition,
+                indicies=indicies
             )
 
             if last_batch or not self.use_ddp:

@@ -60,7 +60,7 @@ def add_base_options(parser):
     group.add_argument("--cuda", default=True, type=bool, help="Use cuda device, otherwise use CPU.")
     group.add_argument("--device", default=0, type=int, help="Device id to use.")
     group.add_argument("--seed", default=10, type=int, help="For fixing random seed.")
-    group.add_argument("--batch_size", default=64, type=int, help="Batch size during training.")
+    group.add_argument("--batch_size", default=60, type=int, help="Batch size during training.")
     group.add_argument("--cond_path", default='/home/youssefabdelazim307/adl4cv/ADL4CV/tensor_image.png', type=str,
                             help="Path for image condition")
     group.add_argument("--cond_path2", default='/home/youssefabdelazim307/adl4cv/ADL4CV/tensor_image.png', type=str,

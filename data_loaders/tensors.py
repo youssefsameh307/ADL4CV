@@ -54,7 +54,8 @@ def collate(batch):
 
     if 'img_condition' in notnone_batches[0]:
         img_condition = [b['img_condition'] for b in notnone_batches]
-        return motion, cond, img_condition
+        indicies = [b['indicies'] for b in notnone_batches]
+        return motion, cond, img_condition, indicies
 
     return motion, cond
 
@@ -66,7 +67,8 @@ def t2m_collate(batch):
         'text': b[2], #b[0]['caption']
         'tokens': b[6],
         'lengths': b[5],
-        'img_condition':b[7] #TODO remove this if not needed
+        'img_condition':b[7], #TODO remove this if not needed
+        'indicies':b[8]
     } for b in batch]
     return collate(adapted_batch)
 

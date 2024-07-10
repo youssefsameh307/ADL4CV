@@ -8,7 +8,7 @@ Docstrings have been added, as well as DDIM sampling and a new collection of bet
 
 import enum
 import math
-
+import pydiffvg
 import numpy as np
 import torch
 import torch as th
@@ -16,6 +16,38 @@ from copy import deepcopy
 from diffusion.nn import mean_flat, sum_flat
 from diffusion.losses import normal_kl, discretized_gaussian_log_likelihood
 from data_loaders.humanml.scripts import motion_process
+from data_loaders.humanml.data.dataset import generate_pose_img 
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+from concurrent.futures import ThreadPoolExecutor
+from data_loaders.humanml.data.dataset import Text2MotionDatasetV2
+from data_loaders.humanml.scripts.motion_process import recover_from_ric
+
+
+class JointsDataset(Dataset):
+    def __init__(self, joints_batch):
+        self.joints_batch = joints_batch
+
+    def __len__(self):
+        return len(self.joints_batch)
+
+    def __getitem__(self, idx):
+        return self.joints_batch[idx]
+    
+    
+def generate_pose_img_batch(joints_batch, num_workers=4):
+    dataset = JointsDataset(joints_batch)
+    dataloader = DataLoader(dataset, batch_size=1, num_workers=num_workers)
+
+    img_batch = []
+
+    for joints in dataloader:
+        img = generate_pose_img(joints.squeeze(0).numpy())
+        img_batch.append(img.unsqueeze(0))
+
+    img_batch = torch.cat(img_batch, dim=0)
+    return img_batch
+
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps, scale_betas=1.):
     """
@@ -134,6 +166,8 @@ class GaussianDiffusion:
         lambda_root_vel=0.,
         lambda_vel_rcxyz=0.,
         lambda_fc=0.,
+        condition_loss = 10000
+        # condition_loss=0.2
     ):
         self.model_mean_type = model_mean_type
         self.model_var_type = model_var_type
@@ -153,6 +187,8 @@ class GaussianDiffusion:
         self.lambda_vel_rcxyz = lambda_vel_rcxyz
         self.lambda_fc = lambda_fc
 
+        self.condition_loss = condition_loss
+        
         if self.lambda_rcxyz > 0. or self.lambda_vel > 0. or self.lambda_root_vel > 0. or \
                 self.lambda_vel_rcxyz > 0. or self.lambda_fc > 0.:
             assert self.loss_type == LossType.MSE, 'Geometric losses are supported by MSE loss type only!'
@@ -1236,7 +1272,7 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None, dataset=None,img_condition = None):
+    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None, dataset=None,img_condition = None,indicies=None):
         """
         Compute training losses for a single timestep.
 
@@ -1280,7 +1316,7 @@ class GaussianDiffusion:
                 terms["loss"] *= self.num_timesteps
         elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
             model_output = model(x_t, self._scale_timesteps(t),img_condition, **model_kwargs)
-
+            
             if self.model_var_type in [
                 ModelVarType.LEARNED,
                 ModelVarType.LEARNED_RANGE,
@@ -1353,10 +1389,51 @@ class GaussianDiffusion:
                                                   model_output_vel[:, :-1, :, :],
                                                   mask[:, :, :, 1:])  # mean_flat((target_vel - model_output_vel) ** 2)
 
+    
+            if self.condition_loss > 0:
+                
+                # B, C = x_t.shape[:2]
+                # rot_, _ = th.split(model_output, C, dim=1)
+                # model_output_xyz = get_xyz(rot_)
+                device = torch.device('cuda')
+                # print(model_output_xyz.shape)
+                n_joints = 22 if model_output.shape[1] == 263 else 21
+                # [1, 263, 1, 196]
+                mean = torch.tensor(dataset.t2m_dataset.mean, dtype=torch.float32).to(device)
+                std =torch.tensor(dataset.t2m_dataset.std, dtype=torch.float32).to(device)
+                sample = inv_transfrom(data=model_output.permute(0, 2, 3, 1),mean=mean,std=std).float()
+                #[1, 1, 196, 263]
+                sample = recover_from_ric(sample, n_joints)
+                sample = sample.view(-1, *sample.shape[2:]).permute(0, 2, 3, 1)
+                sample = sample.permute(0, 3, 1, 2)
+                indices_tensor = torch.tensor(indicies)
+                sample = sample[torch.arange(sample.shape[0]).unsqueeze(1), indices_tensor]
+                sample = sample.reshape(-1,sample.shape[2],sample.shape[3])
+                print("sample", sample.shape)
+                
+                list_of_tensors = torch.unbind(sample, dim=0)
+                target_images_batch = generate_images_parallel(list_of_tensors)
+                print('target_images_batch', target_images_batch.shape)
+                img_t = torch.stack(img_condition)
+                img_t = img_t.reshape(-1,img_t.shape[2],img_t.shape[3],img_t.shape[4])
+                
+                cond_loss = (img_t - target_images_batch).pow(2)
+                non_zero_pixels = (target_images_batch != 0).float().sum(dim=[1, 2, 3])
+                cond_loss = cond_loss.sum(dim=[1, 2, 3])
+                non_zero_pixels = non_zero_pixels + 1e-8
+                cond_loss = cond_loss / non_zero_pixels
+
+                importance_weight = t / self.num_timesteps
+                importance_weight = importance_weight.unsqueeze(1).repeat(1,3).reshape(-1)
+                importance_weight_cond_loss = cond_loss * importance_weight
+                terms["condition_loss"] = importance_weight_cond_loss.mean()
+
+
             terms["loss"] = terms["rot_mse"] + terms.get('vb', 0.) +\
                             (self.lambda_vel * terms.get('vel_mse', 0.)) +\
                             (self.lambda_rcxyz * terms.get('rcxyz_mse', 0.)) + \
-                            (self.lambda_fc * terms.get('fc', 0.))
+                            (self.lambda_fc * terms.get('fc', 0.)) \
+                            + (self.condition_loss * terms.get('condition_loss', 0.))
 
         else:
             raise NotImplementedError(self.loss_type)
@@ -1618,3 +1695,13 @@ def _extract_into_tensor(arr, timesteps, broadcast_shape):
     while len(res.shape) < len(broadcast_shape):
         res = res[..., None]
     return res.expand(broadcast_shape)
+
+
+
+
+def generate_images_parallel(joints_batch, num_workers=8):
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        images = list(executor.map(generate_pose_img, joints_batch))
+    return torch.stack(images)
+def inv_transfrom(data,mean,std):
+    return data * std + mean

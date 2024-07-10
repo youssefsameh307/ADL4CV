@@ -7,8 +7,8 @@ import random
 import codecs as cs
 from tqdm import tqdm
 import spacy
-
-
+import pydiffvg
+import matplotlib.pyplot as plt
 import time
 from torchvision.transforms.functional import to_tensor
 import matplotlib.cm as cm
@@ -233,13 +233,9 @@ class Text2MotionDatasetV2(data.Dataset):
         data_dict = {}
         id_list = []
         with cs.open(split_file, 'r') as f:
-            print('len(f.readlines()):', len(list(f.readlines())))
-
             for line in f.readlines():
                 id_list.append(line.strip())
-                print('len(id_list):', len(id_list))
-                print('len(f.readlines()):', len(list(f.readlines())))
-                if len(id_list) == 45000: #TODO change this
+                if len(id_list) == 200: #TODO change this
                     break
         id_list = np.array(id_list) 
 
@@ -249,7 +245,7 @@ class Text2MotionDatasetV2(data.Dataset):
         fullpath = opt.motion_dir.rsplit('/', 1)
         joints_dir = pjoin(fullpath[0],'new_joints')
         # conditions_dir = pjoin(fullpath[0],'conditions')
-
+        print("id_list", id_list.shape[0])
         for name in tqdm(id_list):
             try:
                 motion = np.load(pjoin(opt.motion_dir, name + '.npy'))
@@ -305,6 +301,9 @@ class Text2MotionDatasetV2(data.Dataset):
                     length_list.append(len(motion))
             except:
                 pass
+            
+        print('len(new_name_list):', len(new_name_list))
+        print('len(length_list):', len(length_list))
 
         name_list, length_list = zip(*sorted(zip(new_name_list, length_list), key=lambda x: x[1]))
 
@@ -373,11 +372,10 @@ class Text2MotionDatasetV2(data.Dataset):
         joints = joints[idx:idx+m_length]
         # motion_length = len(motion)
         # loaded_img_condition = torch.from_numpy(plot_3d_motion(joints))
-        si = Get_frames(joints)
+        loaded_img_condition,indicies = Get_frames(joints)
         # inx = [fi,si,ti]
         # loaded_img_condition = torch.stack(inx)
         
-        loaded_img_condition = si
         
 
         
@@ -395,16 +393,104 @@ class Text2MotionDatasetV2(data.Dataset):
         # print(tokens)
         # go to train_loop and extract img_cond
         # return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
-        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens), loaded_img_condition
+        return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens), loaded_img_condition, indicies
+
+
+
+def generate_pose_img(jointsl):
+    
+    canvas_width = 480
+    canvas_height = 480
+    shapes = []
+    path_groups = []
+    ids = []
+    kinematic_tree = [[0, 2, 5, 8, 11], [0, 1, 4, 7, 10], [0, 3, 6, 9, 12, 15], [9, 14, 17, 19, 21], [9, 13, 16, 18, 20]]
+    # Create the plot
+    # fig, ax = plt.subplots(figsize=(4.8, 4.8))
+    i=0
+    
+    # joints[:,0] = -(joints[:,0] - joints[:,0].mean())
+    # joints[:,1] = -(joints[:,1] - 2.2)
+    
+    # maxX = np.max(np.abs(joints[:,0]))
+    # minX = -np.max(np.abs(joints[:,0]))
+    
+    # maxAxis = 1.2
+    
+    # xFactor = (maxX / maxAxis) * 480 
+    
+    # xAdditive = -(xFactor - 480) /2
+    
+    # joints[:,0] = ((joints[:,0] - minX) / (maxX - minX)* xFactor + xAdditive)
+    # joints[:,1] = ((joints[:,1]) / (2.2) * 440 + 20)
+    
+    
+    
+    joints = torch.randn(jointsl.shape)
+    joints[:, 0] = -(joints[:, 0] - joints[:, 0].mean())
+    joints[:, 1] = -(joints[:, 1] - 2.2)
+    maxX = torch.max(torch.abs(joints[:, 0]))
+    minX = -maxX
+    maxAxis = 1.2
+    xFactor = (maxX / maxAxis) * 480
+    xAdditive = -(xFactor - 480) / 2
+    joints[:, 0] = ((joints[:, 0] - minX) / (maxX - minX) * xFactor + xAdditive)
+    joints[:, 1] = (joints[:, 1] / 2.2 * 440 + 20)
+    
+    
     
 
+    for parent_idx in range(len(kinematic_tree)):
+        # shapes = []
+        ids=[]
+        target_color = torch.tensor([0.1, 0.1, 0.8, 0.5])
+        if parent_idx == 1 or parent_idx == 4:
+            target_color = torch.tensor([0.8, 0.1, 0.1, 0.4])
+        for window_start in range(len(kinematic_tree[parent_idx]) - 1):
+            window_end = window_start + 1
+            start_joint = joints[kinematic_tree[parent_idx][window_start]]
+            end_joint = joints[kinematic_tree[parent_idx][window_end]]
+                
+            points = torch.tensor([[start_joint[0] ,  start_joint[1] ], # base
+                #    [150.0,  60.0], # control point
+                #    [ 90.0, 198.0], # control point
+                    [ end_joint[0] , end_joint[1] ]])
+            
+            num_control_points = torch.tensor([0])
+            path = pydiffvg.Path(num_control_points = num_control_points,
+                    points = points,
+                    is_closed = False,
+                    stroke_width = torch.tensor(4.0))
+            shapes.append(path)
+            ids.append(i)
+            i = i + 1
+        path_group = pydiffvg.ShapeGroup(shape_ids = torch.tensor(ids),
+                                fill_color = None,
+                                stroke_color = target_color)
+        path_groups.append(path_group)
+    
+    scene_args = pydiffvg.RenderFunction.serialize_scene(\
+        canvas_width, canvas_height, shapes, path_groups)
+
+    render = pydiffvg.RenderFunction.apply
+    img = render(480, # width
+                480, # height
+                2,   # num_samples_x
+                2,   # num_samples_y
+                0,   # seed
+                None,
+                *scene_args)
+    
+    # The output image is in linear RGB space. Do Gamma correction before saving the image.
+    img = img[:, :, :3] / 255.0  # Remove the alpha channel and normalize
+    # pydiffvg.imwrite(img.cpu(), 'results/single_circle/target2.png', gamma=2.2)
+    
+    # print(type(img))
+    # print(img)
+    # target = img.clone()
+    return img
 
 
-
-
-
-
-import matplotlib.pyplot as plt
 
 def visualize_pose(joints, filename='./conditions/pose.jpg'):
     """
@@ -452,36 +538,58 @@ def visualize_pose(joints, filename='./conditions/pose.jpg'):
     return image_tensor
 
 def Get_frames(data):
-    firstKeyFrame = 0.25 + (random.random() - 0.5) * 0.2
-    seconKeyFrame = 0.5 + (random.random() - 0.5) * 0.2
-    thirdKeyFrame = 0.75 + (random.random() - 0.5) * 0.2
     
-    first = int(len(data)*firstKeyFrame)
-    second = int(len(data)*seconKeyFrame)
-    third = int(len(data)*thirdKeyFrame)
     
-    fi = visualize_pose(data[first])
-    si = visualize_pose(data[second])
-    ti = visualize_pose(data[third])
     
-    firstIndex = int(firstKeyFrame * 196)
-    secondIndex = int(seconKeyFrame * 196)
-    thirdIndex = int(thirdKeyFrame * 196)
     
-    if random.random() > 0.5:
-        randomChoice = random.choice([0,1,2])
-        if randomChoice == 0:
-            firstIndex = 0
-        elif randomChoice == 1:
-            secondIndex = 0
-        else:
-            thirdIndex = 0
+    number_of_frames = random.choice([2,3,4,5])
+    number_of_frames = 3
+    
+    conditions = []
+    indicies = []
+    for i in range(0,number_of_frames):
+        KeyFrame = (1/number_of_frames) * i  + (1/(2*number_of_frames)) + (random.random() - 0.5) * 0.18
+        frame = int(len(data)*KeyFrame)
+        img = generate_pose_img(data[frame])
+        conditions.append(img)
+        indicies.append(frame)
+        
+    return torch.stack(conditions), indicies
+    # firstKeyFrame = 0.25 + (random.random() - 0.5) * 0.2
+    # seconKeyFrame = 0.5 + (random.random() - 0.5) * 0.2
+    # thirdKeyFrame = 0.75 + (random.random() - 0.5) * 0.2
+    
+    # first = int(len(data)*firstKeyFrame)
+    # second = int(len(data)*seconKeyFrame)
+    # third = int(len(data)*thirdKeyFrame)
+    
+    # # fi = visualize_pose(data[first])
+    # # si = visualize_pose(data[second])
+    # # ti = visualize_pose(data[third])
+    
+    # fi = generate_pose_img(data[first])
+    # si = generate_pose_img(data[second])
+    # ti = generate_pose_img(data[third])
+    
+    
+    # firstIndex = int(firstKeyFrame * 196)
+    # secondIndex = int(seconKeyFrame * 196)
+    # thirdIndex = int(thirdKeyFrame * 196)
+    
+    # if random.random() > 0.5:
+    #     randomChoice = random.choice([0,1,2])
+    #     if randomChoice == 0:
+    #         firstIndex = 0
+    #     elif randomChoice == 1:
+    #         secondIndex = 0
+    #     else:
+    #         thirdIndex = 0
     
     # firstweight = create_quadratic_pattern(196,firstIndex)
     # secondweight = create_quadratic_pattern(196,secondIndex)
     # thirdweight = create_quadratic_pattern(196,thirdIndex)
     
-    return torch.stack([fi,si,ti])
+    # return torch.stack([fi,si,ti]), torch.stack([firstIndex,secondIndex,thirdIndex])
 
 
 

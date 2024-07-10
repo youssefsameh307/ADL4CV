@@ -61,14 +61,7 @@ python -m sample.generate \
 
 
 python -m sample.generate \
-    --model_path ./save/control_3CNN_64bs/model000006000.pt \
-    --model_arch mdmperfect2 \
-    --text_prompt " " \
-    --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/!selectedconditions/sitting on ground.jpg" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/0-kicks-right.jpg" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/!selectedconditions/sitting on ground.jpg" \
-    --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/presentation-candidates/noposeclose6k"
+    --model_path ./save/control_3CNN_64bs/model000006000.pt --model_arch mdmperfect2 --text_prompt " " --seed 16723 --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/presentation-candidates/noposeclose6k"
 
 
 python -m sample.generate \
