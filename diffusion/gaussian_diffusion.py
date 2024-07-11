@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 from concurrent.futures import ThreadPoolExecutor
 from data_loaders.humanml.data.dataset import Text2MotionDatasetV2
 from data_loaders.humanml.scripts.motion_process import recover_from_ric
-
+from dr import calculate_poses_batch
 
 class JointsDataset(Dataset):
     def __init__(self, joints_batch):
@@ -166,7 +166,7 @@ class GaussianDiffusion:
         lambda_root_vel=0.,
         lambda_vel_rcxyz=0.,
         lambda_fc=0.,
-        condition_loss = 10000
+        condition_loss = 100
         # condition_loss=0.2
     ):
         self.model_mean_type = model_mean_type
@@ -1395,10 +1395,11 @@ class GaussianDiffusion:
                 # B, C = x_t.shape[:2]
                 # rot_, _ = th.split(model_output, C, dim=1)
                 # model_output_xyz = get_xyz(rot_)
-                device = torch.device('cuda')
+
                 # print(model_output_xyz.shape)
                 n_joints = 22 if model_output.shape[1] == 263 else 21
                 # [1, 263, 1, 196]
+                device = model_output.device
                 mean = torch.tensor(dataset.t2m_dataset.mean, dtype=torch.float32).to(device)
                 std =torch.tensor(dataset.t2m_dataset.std, dtype=torch.float32).to(device)
                 sample = inv_transfrom(data=model_output.permute(0, 2, 3, 1),mean=mean,std=std).float()
@@ -1409,24 +1410,32 @@ class GaussianDiffusion:
                 indices_tensor = torch.tensor(indicies)
                 sample = sample[torch.arange(sample.shape[0]).unsqueeze(1), indices_tensor]
                 sample = sample.reshape(-1,sample.shape[2],sample.shape[3])
-                print("sample", sample.shape)
-                
-                list_of_tensors = torch.unbind(sample, dim=0)
-                target_images_batch = generate_images_parallel(list_of_tensors)
-                print('target_images_batch', target_images_batch.shape)
-                img_t = torch.stack(img_condition)
+                # print("sample", sample.shape)
+                sample =sample[...,:2]
+                target_images_batch = calculate_poses_batch(sample)
+                target_images_batch = target_images_batch.permute(0,2,3,1)
+                # list_of_tensors = torch.unbind(sample, dim=0)
+                # target_images_batch = generate_images_parallel(list_of_tensors)
+                # print('target_images_batch', target_images_batch.shape)
+                img_t = torch.stack(img_condition).to(device)
                 img_t = img_t.reshape(-1,img_t.shape[2],img_t.shape[3],img_t.shape[4])
                 
                 cond_loss = (img_t - target_images_batch).pow(2)
-                non_zero_pixels = (target_images_batch != 0).float().sum(dim=[1, 2, 3])
-                cond_loss = cond_loss.sum(dim=[1, 2, 3])
+                
+                non_zero_pixels = (target_images_batch != 0).float().sum(
+                    # dim=[1, 2, 3]
+                    )
+                cond_loss = cond_loss.sum(
+                    # dim=[1, 2, 3]
+                    )
                 non_zero_pixels = non_zero_pixels + 1e-8
                 cond_loss = cond_loss / non_zero_pixels
 
-                importance_weight = t / self.num_timesteps
-                importance_weight = importance_weight.unsqueeze(1).repeat(1,3).reshape(-1)
-                importance_weight_cond_loss = cond_loss * importance_weight
-                terms["condition_loss"] = importance_weight_cond_loss.mean()
+                # importance_weight = t / self.num_timesteps
+                # importance_weight = importance_weight.unsqueeze(1).repeat(1,3).reshape(-1)
+                # importance_weight_cond_loss = cond_loss * importance_weight
+                # terms["condition_loss"] = importance_weight_cond_loss.mean()
+                terms["condition_loss"] = cond_loss.mean()
 
 
             terms["loss"] = terms["rot_mse"] + terms.get('vb', 0.) +\

@@ -47,10 +47,10 @@ class SimpleCNN(nn.Module):
             super(SimpleCNN, self).__init__()
             self.device = device
             # Convolutional layers with pooling and batch normalization
-            self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=7, stride=2, padding=3) # 480x480x3 -> 240x240x32
+            self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2, padding=1) # 480x480x3 -> 240x240x32
             self.bn1 = nn.BatchNorm2d(32)
             
-            self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2, padding=2) # 240x240x32 -> 120x120x64
+            self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, padding=1) # 240x240x32 -> 120x120x64
             self.bn2 = nn.BatchNorm2d(64)
             
             self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1) # 120x120x64 -> 60x60x128
@@ -63,7 +63,7 @@ class SimpleCNN(nn.Module):
             self.bn5 = nn.BatchNorm2d(512)
             
             # Global average pooling layer
-            self.global_avg_pool = nn.AdaptiveAvgPool2d((3, 3))
+            self.global_avg_pool = nn.AdaptiveMaxPool2d((3, 3))
             
             # Fully connected layer
             self.fc = nn.Linear(512 * 3 * 3, output_dim)

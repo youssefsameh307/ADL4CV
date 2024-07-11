@@ -23,6 +23,9 @@ and the pose as a pose from a canonical view
 change the forward method into embedding the pose and the trajectory and then concatenate the two outputs on axis 0 the output dimension should be 512 at the end. can be mapped with a linear layer at the end, input size is 3,480,480
 
 
+python -m train.train_mdm --save_dir modela/control_debug2 --diffusion_steps 50 --dataset humanml --train_platform_type TensorboardPlatform --overwrite --num_step 10000 --model_arch "mdm" --batch_size 2
+
+
 
 python -m sample.generate --model_path ./save/controlformer_CNN_Control/model000004550.pt --text_prompt "the person runs and skips"
 
@@ -42,6 +45,7 @@ python -m sample.generate --model_path ./save/controlformer_CNN_Control/model000
 a man lifts something on his left and places it down on his right
 a man full-body sideways jumps to his left.
 
+python -m train.train_mdm --save_dir modela/control_debug --diffusion_steps 50 --dataset humanml --train_platform_type TensorboardPlatform --overwrite --num_step 10000 --model_arch "mdm"
 
 
 
@@ -59,7 +63,7 @@ python -m spacy download en_core_web_sm
 pip install git+https://github.com/openai/CLIP.git
 
 
-tensorboard --logdir=./save/controlformer_clip_3frames --host=0.0.0.0 --port=6006
+tensorboard --logdir=./modela --host=0.0.0.0 --port=6006
 
 tensorboard --logdir=./save/controlformer_cnn_conc_map --host=0.0.0.0 --port=6006
 
@@ -93,3 +97,10 @@ python -m sample.generate --model_path ./save/controlformer_CNN_Control_10kx10k/
 python -m sample.generate --model_path ./save/control_CNN_weights/model000005000.pt --text_prompt "a person walks forward, moving his hands " --seed 16723 --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/raiseslefthand.jpg" --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/raiseslefthand.jpg" --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/raiseslefthand.jpg"
 
 
+
+
+text': ['a man waves his right forearm and hand from side to side.', 'a person walks toward the front, turns to the right, bounces into a squat , and places both arms in front of chest before placing them on the knees.'],
+'text': ['a person jumps straight to the left.', 'a person squats down and puts their hands above their head']
+'text': ['a person bends forward at the waist while both hands are tucked inside their armpits and elbows move up and down.', 'with their left hand, the person raises it up, and with their right hand, they tap on their left wrist with their finger, seeming to give a time-related message.']
+'text': ['a person walks diagonally forward and to the left.', 'a man is walking forward, favoring his left leg and shifting his walk. he is possibly drunk.'],
+'text': ['the figure leans down to the right, straightens, and then leans to the left', 'person walks up and squats slightly to pose a position']

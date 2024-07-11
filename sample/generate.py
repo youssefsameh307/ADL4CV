@@ -123,9 +123,14 @@ def main(model_p=None,test_prompt=None):
         imagePath = args.cond_path
         imagePath2 = args.cond_path2
         imagePath3 = args.cond_path3
-        p1 = load_image(imagePath)
-        p2 = load_image(imagePath2) 
-        p3 = load_image(imagePath3) 
+        p1 = load_image(imagePath).permute(1,2,0)
+        print(p1.max())
+        print(p1.min())
+        print(p1.mean())
+        # if p1.max() >1:
+        #     exit()
+        p2 = load_image(imagePath2).permute(1,2,0)
+        p3 = load_image(imagePath3).permute(1,2,0)
         firstweight = create_quadratic_pattern(196,0.25*196)
         secondweight = create_quadratic_pattern(196,0.5*196)
         thirdweight = create_quadratic_pattern(196,0.75*196)
@@ -153,7 +158,22 @@ def main(model_p=None,test_prompt=None):
                 const_noise=False,
                 img_condition = [torch.stack([p1,p2,p3])]
             )
-        elif args.model_arch == 'mdm3' or args.model_arch == 'mdm' :
+        elif args.model_arch == 'mdm':
+            sample = sample_fn(
+                model,
+                # (args.batch_size, model.njoints, model.nfeats, n_frames),  # BUG FIX - this one caused a mismatch between training and inference
+                (args.batch_size, model.njoints, model.nfeats, max_frames),  # BUG FIX
+                clip_denoised=False,
+                model_kwargs=model_kwargs,
+                skip_timesteps=0,  # 0 is the default value - i.e. don't skip any step
+                init_image=None,
+                progress=True,
+                dump_steps=None,
+                noise=None,
+                const_noise=False,
+                img_condition = [torch.stack([p1,p2,p3])]
+            )
+        elif args.model_arch == 'mdm3' :
             sample = sample_fn(
                 model,
                 # (args.batch_size, model.njoints, model.nfeats, n_frames),  # BUG FIX - this one caused a mismatch between training and inference

@@ -56,11 +56,21 @@ class MDM(nn.Module):
         self.condition_zero_conv = ZeroConvBlock(self.latent_dim, self.latent_dim)
         self.transformerZeroConv = ZeroConvBlock(self.latent_dim, self.latent_dim)
         self.outputZeroConv = ZeroConvBlock(self.latent_dim, self.input_feats)
+        
+        # use this to make the transformer influence the output
+        self.transformerOutputZeroConv = ZeroConvBlock(self.latent_dim, self.input_feats)
 
+        self.input_trainable_process = InputProcess(self.data_rep, self.input_feats+self.gru_emb_dim, self.latent_dim)
+        self.linearLayerNorm = nn.LayerNorm(self.input_feats)
+        self.condition_in_zero_conv = ZeroConvBlock(512, self.input_feats)
+        
+        self.transformerConditionConv = ZeroConvBlock(512, self.latent_dim)
+        
         # self.imageEmbeddingCNN = ImageEmbeddingCNN(embedding_size=nfeats)
         # self.imageEmbeddingClip = ImageEmbeddingClip()
         # self.imageEmbeddingResnet = ImageEmbedding(njoints*nfeats)
         self.imageEmbeddingCNN = SimpleCNN()
+        self.TokenMapper = nn.Linear(512, self.latent_dim)
         
         for param in self.imageEmbeddingCNN.parameters():
             param.requires_grad = True
@@ -216,35 +226,52 @@ class MDM(nn.Module):
         
         # TODO add conditioning here 
         
-        x = self.input_process(x)
+        # x = self.input_process(x)
 
         if self.arch == 'trans_enc':
-            # adding the timestep embed
+            imgs = torch.stack(img_condition)
+            number_of_images = imgs.shape[1]
+            imgs = imgs.reshape(-1,imgs.shape[2],imgs.shape[3],imgs.shape[4]) 
+            imgs = imgs.permute(0,3,1,2) #bs*number, 3,480,480
+            
+            img_embed = self.imageEmbeddingCNN(imgs) # bs*number, 512
+            img_embed = img_embed.unsqueeze(0)
+            
+            extra_tokens = self.transformerConditionConv(img_embed.permute(1,2,0))
+            extra_tokens = extra_tokens.unsqueeze(-1)
+            extra_tokens = extra_tokens.reshape(number_of_images,bs,512)
+            #[1, 60, 512])
+            img_embed = self.condition_in_zero_conv(img_embed.permute(1, 2, 0)) 
+            img_embed = img_embed.unsqueeze(-1)
+            # bs * 3, 263
+            # bs,192,1,263
+            
+            lim = img_embed.reshape(bs,number_of_images,njoints,1,1)
+            lim = lim.repeat(1,1,1,1,int(nframes/number_of_images))
+            lim = lim.reshape(bs,njoints,1,lim.shape[-1]*lim.shape[1])
+            limplus = torch.zeros((bs,njoints,1,nframes),device=x.device)
+            
+            lim = self.linearLayerNorm(lim.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+            limplus[:,:,:,:lim.shape[-1]] = lim
+
+
+            x_control = x + limplus
+            x = self.input_process(x)
+            x_control = self.input_trainable_process(x_control)
+            
             
             xseq = torch.cat((emb, x), axis=0)  # [seqlen+1, bs, d]
             xseq = self.sequence_pos_encoder(xseq)  # [seqlen+1, bs, d]
             output = self.seqTransEncoder(xseq)[1:]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
             
-            # img_condition = torch.stack(img_condition) 
-            # imgs = img_condition[:, 0, :, :, :]
-            # imgs = [cond[0] for cond in img_condition]
-            
-            # indicies = img_condition[:, 1, :]
-            
-            imgs = torch.stack(img_condition)
-            number_of_images = imgs.shape[1]
-            imgs = imgs.reshape(-1,imgs.shape[2],imgs.shape[3],imgs.shape[4])
-            imgs = imgs.permute(0,3,1,2)
-            
-            img_embed = self.imageEmbeddingCNN(imgs) # size 512
-            img_embed = img_embed.unsqueeze(0)
-
-            img_embed = self.condition_zero_conv(img_embed.permute(1, 2, 0)).permute(2, 0, 1) 
-            
-            img_embed = img_embed.reshape(number_of_images,-1,img_embed.shape[2])
-            xseq_trainable = torch.cat((emb, x, img_embed), axis=0)  # [seqlen+1, bs, d]
+            # img_embed = img_embed.reshape(number_of_images,-1,img_embed.shape[2])
+            xseq_trainable = torch.cat((emb, x_control), axis=0)  # [seqlen+1, bs, d]
             xseq_trainable = self.sequence_pos_encoder(xseq_trainable)  # [seqlen+1, bs, d]
+            
+            extra_tokens = self.sequence_pos_encoder(extra_tokens)
+            xseq_trainable = torch.cat((xseq_trainable, extra_tokens), axis=0)
+            
             output_trainable = self.seqTrainableTransEncoder(xseq_trainable)[1:-1 * number_of_images]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
             output = output + self.transformerZeroConv(output_trainable.permute(1, 2, 0)).permute(2, 0, 1)
@@ -270,6 +297,9 @@ class MDM(nn.Module):
         # print(x.shape)
         # print(output.shape)
         # output = output + self.outputZeroConv(x.permute(1, 2, 0)).unsqueeze(2) # TODO add this later
+        
+        output = output + self.transformerOutputZeroConv(output_trainable.permute(1,2,0)).unsqueeze(2)
+        # output = output + self.outputZeroConv(x_control.permute(1, 2, 0)).unsqueeze(2)
         return output
 
 

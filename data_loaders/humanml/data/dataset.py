@@ -14,6 +14,8 @@ from torchvision.transforms.functional import to_tensor
 import matplotlib.cm as cm
 import random
 
+from dr import calculate_poses_batch
+
 from io import BytesIO
 
 from torch.utils.data._utils.collate import default_collate
@@ -235,7 +237,7 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-                if len(id_list) == 200: #TODO change this
+                if len(id_list) == 10: #TODO change this
                     break
         id_list = np.array(id_list) 
 
@@ -333,11 +335,13 @@ class Text2MotionDatasetV2(data.Dataset):
         # Randomly select a caption
         text_data = random.choice(text_list)
         # og_caption = text_data['caption']
-        if random.random() > 0.7:
-            text_data['caption'] = ''
-            text_data['tokens'] = []
-        caption, tokens = text_data['caption'], text_data['tokens']
 
+        caption, tokens = text_data['caption'], text_data['tokens']
+        
+        # if random.random() > 0.5:
+        #     caption = ''
+        #     tokens = []
+            
         if len(tokens) < self.opt.max_text_len:
             # pad with "unk"
             tokens = ['sos/OTHER'] + tokens + ['eos/OTHER']
@@ -537,10 +541,54 @@ def visualize_pose(joints, filename='./conditions/pose.jpg'):
 
     return image_tensor
 
+
+def visualize_pose(joints, kinematic_tree, filename='./conditions/pose.jpg'):
+    """
+    This function visualizes a 22-joint pose with labeled lines between connected joints.
+
+    Args:
+        joints: A numpy array of shape (22, 3) representing joint positions (x, y, z).
+        kinematic_tree: A list of lists representing the parent-child relationships between joints.
+        filename: The filename to save the image (default: './conditions/pose.jpg').
+    """
+    # Convert joints to a PyTorch tensor
+    joints = torch.tensor(joints, dtype=torch.float32)
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(4.8, 4.8))
+
+    for parent_idx in range(len(kinematic_tree)):
+        for window_start in range(len(kinematic_tree[parent_idx]) - 1):
+            window_end = window_start + 1
+            start_joint = joints[kinematic_tree[parent_idx][window_start]]
+            end_joint = joints[kinematic_tree[parent_idx][window_end]]
+            color = 'k-'
+            if parent_idx == 1 or parent_idx == 4:
+                color = 'r-'
+            ax.plot([start_joint[0].item(), end_joint[0].item()], [start_joint[1].item(), end_joint[1].item()], color, alpha=0.7)
+
+    # Set axis limits slightly bigger than joint range for better visualization
+    plt.xlim([joints[:, 0].min().item()-0.2, joints[:, 0].max().item()+0.2])
+    plt.ylim([joints[:, 1].min().item()-0.05, joints[:, 1].max().item()+0.05])
+    
+    ax.set_axis_off()
+    ax.set_facecolor('white')
+
+    # Convert plot to tensor
+    fig.canvas.draw()
+    image_np = np.array(fig.canvas.renderer.buffer_rgba())
+    image_np = image_np[:, :, :3] / 255.0
+    image_tensor = to_tensor(image_np).float()
+    
+    plt.close(fig)  # Close the figure to free memory
+
+    return image_tensor
+
+
+
+
+
 def Get_frames(data):
-    
-    
-    
     
     number_of_frames = random.choice([2,3,4,5])
     number_of_frames = 3
@@ -548,12 +596,23 @@ def Get_frames(data):
     conditions = []
     indicies = []
     for i in range(0,number_of_frames):
-        KeyFrame = (1/number_of_frames) * i  + (1/(2*number_of_frames)) + (random.random() - 0.5) * 0.18
+        KeyFrame = (1/number_of_frames) * i  + (1/(2*number_of_frames)) 
+        # + (random.random() - 0.5) * 0.18 # TODO: account for this in forward method with some encoding, removed perturbations for now
         frame = int(len(data)*KeyFrame)
-        img = generate_pose_img(data[frame])
-        conditions.append(img)
         indicies.append(frame)
+    
+    ten = data[indicies]
+    ten = ten[..., :2]
+    ten = torch.tensor(ten)
+    
+    # print(ten.shape)
+    
+    img = calculate_poses_batch(ten)
+    img = img.permute(0,2,3,1)
+    # conditions.append(img)
+    # indicies.append(frame)
         
+    return img, indicies
     return torch.stack(conditions), indicies
     # firstKeyFrame = 0.25 + (random.random() - 0.5) * 0.2
     # seconKeyFrame = 0.5 + (random.random() - 0.5) * 0.2

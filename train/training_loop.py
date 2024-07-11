@@ -20,6 +20,8 @@ from data_loaders.humanml.networks.evaluator_wrapper import EvaluatorMDMWrapper
 from eval import eval_humanml, eval_humanact12_uestc
 from data_loaders.get_data import get_dataset_loader
 
+from dr import save_batch_images
+
 import os
 import glob
 
@@ -147,12 +149,20 @@ class TrainLoop:
             print(f'Starting epoch {epoch}')
             # self.save()
             # exit()
+
+            
             for motion, cond, img_condition, indicies in tqdm(self.data):
                 if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                     break
-                
+
                 # img_condition = img_condition.to(self.device)
+                mal = torch.stack(img_condition)
+                print("val max: ",mal.max())
+                print("val min: ",mal.min())
+                print("val: ",mal.mean())
+                
                 motion = motion.to(self.device)
+                
                 cond['y'] = {key: val.to(self.device) if torch.is_tensor(val) else val for key, val in cond['y'].items()}
 
                 # TODO add the img_cond here
@@ -187,8 +197,7 @@ class TrainLoop:
                     if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                         return
                 self.step += 1
-
-            
+            exit()
             if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                 break
         # Save the last checkpoint if it wasn't already saved.

@@ -14,10 +14,10 @@ from utils.model_util import create_model_and_diffusion
 from train.train_platforms import ClearmlPlatform, TensorboardPlatform, NoPlatform  # required for the eval operation
 import torch
 import pydiffvg
-import torch.multiprocessing as mp
+# import torch.multiprocessing as mp
 
 # Set the multiprocessing start method to 'spawn'
-mp.set_start_method('spawn', force=True)
+# mp.set_start_method('spawn', force=True)
 pydiffvg.set_use_gpu(torch.cuda.is_available())
 def main():
     args = train_args()
