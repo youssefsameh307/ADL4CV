@@ -166,7 +166,7 @@ class GaussianDiffusion:
         lambda_root_vel=0.,
         lambda_vel_rcxyz=0.,
         lambda_fc=0.,
-        condition_loss = 100
+        condition_loss = 2
         # condition_loss=0.2
     ):
         self.model_mean_type = model_mean_type
@@ -1422,7 +1422,7 @@ class GaussianDiffusion:
                 
                 cond_loss = (img_t - target_images_batch).pow(2)
                 
-                non_zero_pixels = (target_images_batch != 0).float().sum(
+                non_zero_pixels = (target_images_batch != 1).float().sum(
                     # dim=[1, 2, 3]
                     )
                 cond_loss = cond_loss.sum(

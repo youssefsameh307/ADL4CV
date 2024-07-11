@@ -58,7 +58,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000000000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -70,7 +70,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000001000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -82,7 +82,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000002000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -95,7 +95,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000003000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -108,7 +108,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000004000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -120,7 +120,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000006000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -133,7 +133,7 @@
 # python -m sample.generate \
 #     --model_path ./modela/diffcontrol_loss_Ccnn_conc_ours/model000008000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
@@ -146,11 +146,11 @@
 python -m sample.generate \
     --model_path ./modela/control_debug/model000003000.pt \
     --model_arch mdmperfect2 \
-    --text_prompt " " \
+    --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/a11"\
     --model_arch "mdm"
 
@@ -158,22 +158,22 @@ python -m sample.generate \
 python -m sample.generate \
     --model_path ./modela/control_debug/model000003000.pt \
     --model_arch mdmperfect2 \
-    --text_prompt " " \
+    --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/a12"\
     --model_arch "mdm"
 
 python -m sample.generate \
     --model_path ./modela/control_debug/model000003000.pt \
     --model_arch mdmperfect2 \
-    --text_prompt " " \
+    --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/a13"\
     --model_arch "mdm"
 
@@ -181,11 +181,11 @@ python -m sample.generate \
 # python -m sample.generate \
 #     --model_path ./modela/control_debug/model000005000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
 #     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns13"\
 #     --model_arch "mdm"
 
@@ -193,11 +193,11 @@ python -m sample.generate \
 # python -m sample.generate \
 #     --model_path ./modela/control_debug/model000007000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
 #     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns14"\
 #     --model_arch "mdm"
 
@@ -219,11 +219,11 @@ python -m sample.generate \
 python -m sample.generate \
     --model_path ./modela/control_debug2/model000003000.pt \
     --model_arch mdmperfect2 \
-    --text_prompt " " \
+    --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns21"\
     --model_arch "mdm"
 
@@ -231,11 +231,11 @@ python -m sample.generate \
 python -m sample.generate \
     --model_path ./modela/control_debug2/model000003000.pt \
     --model_arch mdmperfect2 \
-    --text_prompt " " \
+    --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns22"\
     --model_arch "mdm"
 
@@ -243,11 +243,11 @@ python -m sample.generate \
 python -m sample.generate \
     --model_path ./modela/control_debug2/model000003000.pt \
     --model_arch mdmperfect2 \
-    --text_prompt " " \
+    --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns23"\
     --model_arch "mdm"
 
@@ -255,11 +255,11 @@ python -m sample.generate \
 # python -m sample.generate \
 #     --model_path ./modela/control_debug2/model000005000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
 #     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns23"\
 #     --model_arch "mdm"
 
@@ -267,11 +267,11 @@ python -m sample.generate \
 # python -m sample.generate \
 #     --model_path ./modela/control_debug2/model000007000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_25.png" \
-#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_26.png" \
-#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_27.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+#     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_5.png" \
+#     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_8.png" \
 #     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/ns24"\
 #     --model_arch "mdm"
 
@@ -286,13 +286,13 @@ python -m sample.generate \
 
 
 # python -m sample.generate \
-#     --model_path ./save/control_3CNN_64bs/model000006000.pt --model_arch mdmperfect2 --text_prompt " " --seed 16723 --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/presentation-candidates/handstand_middle_6k"
+#     --model_path ./save/control_3CNN_64bs/model000006000.pt --model_arch mdmperfect2 --text_prompt "man walks forward " --seed 16723 --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/presentation-candidates/handstand_middle_6k"
 
 
 # python -m sample.generate \
 #     --model_path ./save/control_3CNN_64bs/model000010000.pt \
 #     --model_arch mdmperfect2 \
-#     --text_prompt " " \
+#     --text_prompt "man walks forward " \
 #     --seed 16723 \
 #     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/!selectedconditions/sitting on ground.jpg" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/conditions/0-kicks-right.jpg" \

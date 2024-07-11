@@ -266,11 +266,8 @@ class MDM(nn.Module):
             
             
             # img_embed = img_embed.reshape(number_of_images,-1,img_embed.shape[2])
-            xseq_trainable = torch.cat((emb, x_control), axis=0)  # [seqlen+1, bs, d]
+            xseq_trainable = torch.cat((emb, x_control,extra_tokens), axis=0)  # [seqlen+1, bs, d]
             xseq_trainable = self.sequence_pos_encoder(xseq_trainable)  # [seqlen+1, bs, d]
-            
-            extra_tokens = self.sequence_pos_encoder(extra_tokens)
-            xseq_trainable = torch.cat((xseq_trainable, extra_tokens), axis=0)
             
             output_trainable = self.seqTrainableTransEncoder(xseq_trainable)[1:-1 * number_of_images]  # , src_key_padding_mask=~maskseq)  # [seqlen, bs, d]
             
@@ -298,8 +295,8 @@ class MDM(nn.Module):
         # print(output.shape)
         # output = output + self.outputZeroConv(x.permute(1, 2, 0)).unsqueeze(2) # TODO add this later
         
-        output = output + self.transformerOutputZeroConv(output_trainable.permute(1,2,0)).unsqueeze(2)
-        # output = output + self.outputZeroConv(x_control.permute(1, 2, 0)).unsqueeze(2)
+        # output = output + self.transformerOutputZeroConv(output_trainable.permute(1,2,0)).unsqueeze(2)
+        output = output + self.outputZeroConv(x_control.permute(1, 2, 0)).unsqueeze(2)
         return output
 
 

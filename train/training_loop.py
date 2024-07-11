@@ -154,12 +154,6 @@ class TrainLoop:
             for motion, cond, img_condition, indicies in tqdm(self.data):
                 if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                     break
-
-                # img_condition = img_condition.to(self.device)
-                mal = torch.stack(img_condition)
-                print("val max: ",mal.max())
-                print("val min: ",mal.min())
-                print("val: ",mal.mean())
                 
                 motion = motion.to(self.device)
                 
@@ -197,7 +191,7 @@ class TrainLoop:
                     if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                         return
                 self.step += 1
-            exit()
+
             if not (not self.lr_anneal_steps or self.step + self.resume_step < self.lr_anneal_steps):
                 break
         # Save the last checkpoint if it wasn't already saved.
