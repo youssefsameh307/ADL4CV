@@ -84,9 +84,9 @@ def evaluate(args, model, diffusion, data):
             datasetGT2.shuffle()
 
             dataiterator = DataLoader(datasetGT1, batch_size=args.batch_size,
-                                      shuffle=False, num_workers=0, collate_fn=collate) # 8
+                                      shuffle=False, num_workers=8, collate_fn=collate) # 8
             dataiterator2 = DataLoader(datasetGT2, batch_size=args.batch_size,
-                                       shuffle=False, num_workers=0, collate_fn=collate) # 8
+                                       shuffle=False, num_workers=8, collate_fn=collate) # 8
 
             new_data_loader = functools.partial(NewDataloader, model=model, diffusion=diffusion, device=device,
                                                 unconstrained=args.unconstrained, num_samples=args.num_samples)
@@ -108,7 +108,7 @@ def evaluate(args, model, diffusion, data):
             dataset_unconstrained.reset_shuffle()
             dataset_unconstrained.shuffle()
             dataiterator_unconstrained = DataLoader(dataset_unconstrained, batch_size=args.batch_size,
-                                           shuffle=False, num_workers=0, collate_fn=collate) # 8
+                                           shuffle=False, num_workers=8, collate_fn=collate) # 8
             motionloader_unconstrained = new_data_loader(mode="gen", dataiterator=dataiterator_unconstrained, num_samples=num_samples_unconstrained)
 
             generated_motions = []

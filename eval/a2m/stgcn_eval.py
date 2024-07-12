@@ -117,7 +117,7 @@ def evaluate(args, model, diffusion, data):
                 data.reset_shuffle()
                 data.shuffle()
 
-        dataiterator = {key: [DataLoader(data, batch_size=bs, shuffle=False, num_workers=0, collate_fn=collate)
+        dataiterator = {key: [DataLoader(data, batch_size=bs, shuffle=False, num_workers=8, collate_fn=collate)
                               for data in datasetGT[key]]
                         for key in data_types}
 

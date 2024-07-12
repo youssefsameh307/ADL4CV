@@ -53,7 +53,7 @@ class CompV6GeneratedDataset(Dataset):
         assert mm_num_samples < len(dataset)
         print(opt.model_dir)
 
-        dataloader = DataLoader(dataset, batch_size=1, num_workers=1, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=1, num_workers=0, shuffle=True)
         text_enc, seq_pri, seq_dec, att_layer, mov_enc, mov_dec, len_estimator = build_models(opt)
         trainer = CompTrainerV6(opt, text_enc, seq_pri, seq_dec, att_layer, mov_dec, mov_enc=mov_enc)
         epoch, it, sub_ep, schedule_len = trainer.load(pjoin(opt.model_dir, opt.which_epoch + '.tar'))
@@ -155,8 +155,11 @@ class CompMDMGeneratedDataset(Dataset):
         sample_fn = (
             diffusion.p_sample_loop if not use_ddim else diffusion.ddim_sample_loop
         )
-
+        
+        mm_num_repeats=1
+        
         real_num_batches = len(dataloader)
+        print("old_num_batches:", real_num_batches)
         if num_samples_limit is not None:
             real_num_batches = num_samples_limit // dataloader.batch_size + 1
         print('real_num_batches', real_num_batches)
@@ -172,10 +175,14 @@ class CompMDMGeneratedDataset(Dataset):
 
         model.eval()
 
-
+        total_iterations = len(dataloader)
         with torch.no_grad():
-            for i, (motion, model_kwargs) in tqdm(enumerate(dataloader)):
+            for i, (motion, model_kwargs,img_condition) in tqdm(enumerate(dataloader)):
 
+                if i ==2:
+                    break
+                
+                
                 if num_samples_limit is not None and len(generated_motion) >= num_samples_limit:
                     break
 
@@ -203,6 +210,7 @@ class CompMDMGeneratedDataset(Dataset):
                         dump_steps=None,
                         noise=None,
                         const_noise=False,
+                        img_condition=img_condition
                         # when experimenting guidance_scale we want to nutrileze the effect of noise on generation
                     )
 

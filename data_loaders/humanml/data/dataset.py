@@ -233,12 +233,9 @@ class Text2MotionDatasetV2(data.Dataset):
         data_dict = {}
         id_list = []
         with cs.open(split_file, 'r') as f:
-            print('len(f.readlines()):', len(list(f.readlines())))
-
             for line in f.readlines():
                 id_list.append(line.strip())
-                print('len(id_list):', len(id_list))
-                print('len(f.readlines()):', len(list(f.readlines())))
+
                 if len(id_list) == 45000: #TODO change this
                     break
         id_list = np.array(id_list) 
@@ -430,8 +427,11 @@ def visualize_pose(joints, filename='./conditions/pose.jpg'):
             ax.plot([start_joint[0], end_joint[0]], [start_joint[1], end_joint[1]], color, alpha=0.7)
 
     # Set axis limits slightly bigger than joint range for better visualization
-    plt.xlim([joints[:, 0].min()-0.2, joints[:, 0].max()+0.2])
-    plt.ylim([joints[:, 1].min()-0.05, joints[:, 1].max()+0.05])
+    try:
+        plt.xlim([joints[:, 0].min()-0.2, joints[:, 0].max()+0.2])
+        plt.ylim([joints[:, 1].min()-0.05, joints[:, 1].max()+0.05])
+    except:
+        print("shit happened")
     
     ax.set_axis_off()
     ax.set_facecolor('white')
@@ -460,9 +460,9 @@ def Get_frames(data):
     second = int(len(data)*seconKeyFrame)
     third = int(len(data)*thirdKeyFrame)
     
-    fi = visualize_pose(data[first])
+    # fi = visualize_pose(data[first])
     si = visualize_pose(data[second])
-    ti = visualize_pose(data[third])
+    # ti = visualize_pose(data[third])
     
     firstIndex = int(firstKeyFrame * 196)
     secondIndex = int(seconKeyFrame * 196)
@@ -480,8 +480,8 @@ def Get_frames(data):
     # firstweight = create_quadratic_pattern(196,firstIndex)
     # secondweight = create_quadratic_pattern(196,secondIndex)
     # thirdweight = create_quadratic_pattern(196,thirdIndex)
-    
-    return torch.stack([fi,si,ti])
+    return si
+    # return torch.stack([fi,si,ti])
 
 
 

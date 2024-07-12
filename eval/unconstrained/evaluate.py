@@ -64,7 +64,7 @@ def evaluate_unconstrained_metrics(generated_motions, device, fast):
 
     generated_motions -= generated_motions[:, 8:9, :, :]  # locate root joint of all frames at origin
 
-    iterator_generated = DataLoader(generated_motions, batch_size=64, shuffle=False, num_workers=0)
+    iterator_generated = DataLoader(generated_motions, batch_size=64, shuffle=False, num_workers=8)
 
     # compute features of generated motions
     generated_features, generated_predictions = compute_features(act_rec_model, iterator_generated, device=device)
@@ -75,7 +75,7 @@ def evaluate_unconstrained_metrics(generated_motions, device, fast):
     motion_data_raw = np.load(dataset_path, allow_pickle=True)
     motion_data = motion_data_raw[:, :15]  # data has 16 joints for back compitability with older formats
     motion_data -= motion_data[:, 8:9, :, :]  # locate root joint of all frames at origin
-    iterator_dataset = DataLoader(motion_data, batch_size=64, shuffle=False, num_workers=0)
+    iterator_dataset = DataLoader(motion_data, batch_size=64, shuffle=False, num_workers=8)
 
     # compute features of dataset motions
     dataset_features, dataset_predictions = compute_features(act_rec_model, iterator_dataset, device=device)

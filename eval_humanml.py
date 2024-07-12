@@ -27,10 +27,16 @@ def evaluate_matching_score(eval_wrapper, motion_loaders, file):
         all_size = 0
         matching_score_sum = 0
         top_k_count = 0
-        # print(motion_loader_name)
+        print(motion_loader_name)
+        if motion_loader_name == 'ground truth':
+            continue
         with torch.no_grad():
             for idx, batch in enumerate(motion_loader):
-                word_embeddings, pos_one_hots, _, sent_lens, motions, m_lens, _ = batch
+                try:
+                    word_embeddings, pos_one_hots, _, sent_lens, motions, m_lens, _,img_condition = batch
+                except:
+                    print("DATASET error")
+                word_embeddings, pos_one_hots, _, sent_lens, motions, m_lens, _,img_condition = batch
                 text_embeddings, motion_embeddings = eval_wrapper.get_co_embeddings(
                     word_embs=word_embeddings,
                     pos_ohot=pos_one_hots,
