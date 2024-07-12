@@ -166,7 +166,7 @@ class GaussianDiffusion:
         lambda_root_vel=0.,
         lambda_vel_rcxyz=0.,
         lambda_fc=0.,
-        condition_loss = 2
+        condition_loss = 2.4
         # condition_loss=0.2
     ):
         self.model_mean_type = model_mean_type

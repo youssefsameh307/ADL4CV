@@ -60,10 +60,10 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_0k" \
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_0k" \
 #     --model_arch "mdm"
 
 
@@ -72,10 +72,10 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_0k" \
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_0k" \
 #     --model_arch "mdm"
 
 
@@ -84,10 +84,10 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_2k" \
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_2k" \
 #     --model_arch "mdm"
 
 
@@ -97,10 +97,10 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_3k"\
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_3k"\
 #     --model_arch "mdm"
 
 
@@ -110,10 +110,10 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_4k"\
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_4k"\
 #     --model_arch "mdm"
 
 
@@ -122,10 +122,10 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_6k"\
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_6k"\
 #     --model_arch "mdm"
 
 
@@ -135,16 +135,16 @@
 #     --model_arch mdmperfect2 \
 #     --text_prompt "man walks forward " \
 #     --seed 16723 \
-#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_137.png" \
+#     --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
 #     --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
 #     --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_9.png" \
-#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/137_2*9_8k"\
+#     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/231_2*9_8k"\
 #     --model_arch "mdm"
 
 
 
 python -m sample.generate \
-    --model_path ./modela/control_debug_proper/model000006200.pt \
+    --model_path /home/youssefabdelazim307/adl4cv/ADL4CV/modela/control_fixed/model000004200.pt \
     --model_arch mdmperfect2 \
     --text_prompt "man raises his hands up " \
     --seed 16723 \
@@ -156,18 +156,18 @@ python -m sample.generate \
 
 
 python -m sample.generate \
-    --model_path ./modela/control_debug_proper/model000006200.pt \
+    --model_path /home/youssefabdelazim307/adl4cv/ADL4CV/modela/control_fixed/model000004200.pt \
     --model_arch mdmperfect2 \
     --text_prompt "man walks forward " \
     --seed 16723 \
-    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
-    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
-    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/batch_img/image_2.png" \
+    --cond_path "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
+    --cond_path3 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
+    --cond_path2 "/home/youssefabdelazim307/adl4cv/ADL4CV/diffvgex2/image_231.png" \
     --output_dir "/home/youssefabdelazim307/adl4cv/ADL4CV/new-presentation-candidates/allsit"\
     --model_arch "mdm"
 
 python -m sample.generate \
-    --model_path ./modela/control_debug_proper/model000006200.pt \
+    --model_path /home/youssefabdelazim307/adl4cv/ADL4CV/modela/control_fixed/model000004200.pt \
     --model_arch mdmperfect2 \
     --text_prompt "man walks forward " \
     --seed 16723 \
@@ -179,7 +179,7 @@ python -m sample.generate \
 
 
 python -m sample.generate \
-    --model_path ./modela/control_debug_proper/model000006200.pt \
+    --model_path /home/youssefabdelazim307/adl4cv/ADL4CV/modela/control_fixed/model000004200.pt \
     --model_arch mdmperfect2 \
     --text_prompt "man walks forward " \
     --seed 16723 \
@@ -220,6 +220,9 @@ python -m sample.generate \
 
 
 
+
+
+python -m train.train_mdm --save_dir modela/control_proper_final --diffusion_steps 50 --dataset humanml --train_platform_type TensorboardPlatform --overwrite --num_step 10000 --model_arch "mdm" --batch_size 32
 
 
 

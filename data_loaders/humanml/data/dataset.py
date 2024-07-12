@@ -237,8 +237,8 @@ class Text2MotionDatasetV2(data.Dataset):
         with cs.open(split_file, 'r') as f:
             for line in f.readlines():
                 id_list.append(line.strip())
-                if len(id_list) == 10: #TODO change this
-                    break
+                # if len(id_list) == 10: #TODO change this
+                #     break
         id_list = np.array(id_list) 
 
         new_name_list = []
