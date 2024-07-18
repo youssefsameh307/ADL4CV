@@ -109,11 +109,10 @@ class MMGeneratedDataset(Dataset):
     def __getitem__(self, item):
         data = self.dataset[item]
         mm_motions = data['mm_motions']
-        joints = data['joints']
         m_lens = []
         motions = []
-        img_condition = Get_frames(joints)
-        for idx,mm_motion in enumerate(mm_motions):
+        # img_condition = Get_frames(joints)
+        for mm_motion in mm_motions:
             m_lens.append(mm_motion['length'])
             motion = mm_motion['motion']
             # We don't need the following logic because our sample func generates the full tensor anyway:
@@ -122,17 +121,15 @@ class MMGeneratedDataset(Dataset):
             #                              np.zeros((self.opt.max_motion_length - len(motion), motion.shape[1]))
             #                              ], axis=0)
             motion = motion[None, :]
+
             motions.append(motion)
             
         m_lens = np.array(m_lens, dtype=np.int)
         motions = np.concatenate(motions, axis=0)
         sort_indx = np.argsort(m_lens)[::-1].copy()
-        # print(m_lens)
-        # print(sort_indx)
-        # print(m_lens[sort_indx])
         m_lens = m_lens[sort_indx]
         motions = motions[sort_indx]
-        return motions, m_lens, img_condition
+        return motions, m_lens
 
 
 
@@ -153,8 +150,8 @@ def get_motion_loader(opt_path, batch_size, ground_truth_dataset, mm_num_samples
 
     mm_dataset = MMGeneratedDataset(opt, dataset, w_vectorizer)
 
-    motion_loader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True, num_workers=0)
-    mm_motion_loader = DataLoader(mm_dataset, batch_size=1,collate_fn=collate_fn, num_workers=0)
+    motion_loader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True, num_workers=4)
+    mm_motion_loader = DataLoader(mm_dataset, batch_size=1,collate_fn=collate_fn, num_workers=1)
 
     print('Generated Dataset Loading Completed!!!')
 
@@ -169,20 +166,20 @@ def get_mdm_loader(model, diffusion, batch_size, ground_truth_loader, mm_num_sam
     # dataset = CompMDMGeneratedDataset(opt, ground_truth_dataset, ground_truth_dataset.w_vectorizer, mm_num_samples, mm_num_repeats)
     dataset = CompMDMGeneratedDataset(model, diffusion, ground_truth_loader, mm_num_samples, mm_num_repeats, max_motion_length, num_samples_limit, scale)
 
-    try:
-        file_path = 'dataset.pkl'
+    # try:
+    #     file_path = 'dataset.pkl'
 
-        # Open the file in binary write mode and dump the dataset
-        with open(file_path, 'wb') as f:
-            pickle.dump(dataset, f)
-    except:
-        print('Error saving dataset')
+    #     # Open the file in binary write mode and dump the dataset
+    #     with open(file_path, 'wb') as f:
+    #         pickle.dump(dataset, f)
+    # except:
+    #     print('Error saving dataset')
 
     mm_dataset = MMGeneratedDataset(opt, dataset, ground_truth_loader.dataset.w_vectorizer)
 
     # NOTE: bs must not be changed! this will cause a bug in R precision calc!
-    motion_loader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True, num_workers=0)
-    mm_motion_loader = DataLoader(mm_dataset, batch_size=1, num_workers=0)
+    motion_loader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True, num_workers=4)
+    mm_motion_loader = DataLoader(mm_dataset, batch_size=1, num_workers=1)
 
     print('Generated Dataset Loading Completed!!!')
 

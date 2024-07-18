@@ -229,7 +229,9 @@ class Text2MotionDatasetV2(data.Dataset):
         self.pointer = 0
         self.max_motion_length = opt.max_motion_length
         min_motion_len = 40 if self.opt.dataset_name =='t2m' else 24
-
+        
+        self.visualize = True
+        
         data_dict = {}
         id_list = []
         with cs.open(split_file, 'r') as f:
@@ -365,16 +367,19 @@ class Text2MotionDatasetV2(data.Dataset):
             m_length = (m_length // self.opt.unit_length - 1) * self.opt.unit_length
         elif coin2 == 'single':
             m_length = (m_length // self.opt.unit_length) * self.opt.unit_length
+            
         idx = random.randint(0, len(motion) - m_length)
         motion = motion[idx:idx+m_length]
         joints = joints[idx:idx+m_length]
         # motion_length = len(motion)
         # loaded_img_condition = torch.from_numpy(plot_3d_motion(joints))
-        si = Get_frames(joints)
+        if self.visualize:
+            si = Get_frames(joints)
+            loaded_img_condition = si
         # inx = [fi,si,ti]
         # loaded_img_condition = torch.stack(inx)
         
-        loaded_img_condition = si
+        
         
 
         
@@ -392,6 +397,9 @@ class Text2MotionDatasetV2(data.Dataset):
         # print(tokens)
         # go to train_loop and extract img_cond
         # return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
+        if not self.visualize:
+            return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens)
+        
         return word_embeddings, pos_one_hots, caption, sent_len, motion, m_length, '_'.join(tokens), loaded_img_condition
     
 
@@ -1098,7 +1106,7 @@ class TextOnlyDataset(data.Dataset):
 class HumanML3D(data.Dataset):
     def __init__(self, mode, datapath='./dataset/humanml_opt.txt', split="train", **kwargs):
         self.mode = mode
-        
+        self.visualize = True
         self.dataset_name = 't2m'
         self.dataname = 't2m'
 
@@ -1147,6 +1155,11 @@ class HumanML3D(data.Dataset):
                                           'To train and evaluate MDM you should get the FULL data as described ' \
                                           'in the README file.'
 
+
+    def set_visualization(self, input):
+        self.visualize = input
+        self.t2m_dataset.visualize = input
+        
     def __getitem__(self, item):
         return self.t2m_dataset.__getitem__(item)
 

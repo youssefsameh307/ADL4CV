@@ -53,7 +53,7 @@ class CompV6GeneratedDataset(Dataset):
         assert mm_num_samples < len(dataset)
         print(opt.model_dir)
 
-        dataloader = DataLoader(dataset, batch_size=1, num_workers=0, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=1, num_workers=1, shuffle=True)
         text_enc, seq_pri, seq_dec, att_layer, mov_enc, mov_dec, len_estimator = build_models(opt)
         trainer = CompTrainerV6(opt, text_enc, seq_pri, seq_dec, att_layer, mov_dec, mov_enc=mov_enc)
         epoch, it, sub_ep, schedule_len = trainer.load(pjoin(opt.model_dir, opt.which_epoch + '.tar'))
@@ -146,6 +146,7 @@ class CompV6GeneratedDataset(Dataset):
 class CompMDMGeneratedDataset(Dataset):
 
     def __init__(self, model, diffusion, dataloader, mm_num_samples, mm_num_repeats, max_motion_length, num_samples_limit, scale=1.):
+        dataloader.dataset.set_visualization(True)
         self.dataloader = dataloader
         self.dataset = dataloader.dataset
         assert mm_num_samples < len(dataloader.dataset)
@@ -155,8 +156,6 @@ class CompMDMGeneratedDataset(Dataset):
         sample_fn = (
             diffusion.p_sample_loop if not use_ddim else diffusion.ddim_sample_loop
         )
-        
-        mm_num_repeats=1
         
         real_num_batches = len(dataloader)
         print("old_num_batches:", real_num_batches)
@@ -175,13 +174,9 @@ class CompMDMGeneratedDataset(Dataset):
 
         model.eval()
 
-        total_iterations = len(dataloader)
         with torch.no_grad():
             for i, (motion, model_kwargs,img_condition) in tqdm(enumerate(dataloader)):
 
-                if i ==2:
-                    break
-                
                 
                 if num_samples_limit is not None and len(generated_motion) >= num_samples_limit:
                     break

@@ -28,15 +28,20 @@ def evaluate_matching_score(eval_wrapper, motion_loaders, file):
         matching_score_sum = 0
         top_k_count = 0
         print(motion_loader_name)
-        if motion_loader_name == 'ground truth':
-            continue
+        try:
+            motion_loader.dataset.set_visualization(False)
+        except:
+            try:
+                motion_loader.dataset.dataset.set_visualization(False)    
+            except:
+                print("used another motion loader here then ml")
         with torch.no_grad():
             for idx, batch in enumerate(motion_loader):
                 try:
                     word_embeddings, pos_one_hots, _, sent_lens, motions, m_lens, _,img_condition = batch
                 except:
-                    print("DATASET error")
-                word_embeddings, pos_one_hots, _, sent_lens, motions, m_lens, _,img_condition = batch
+                    word_embeddings, pos_one_hots, _, sent_lens, motions, m_lens, _ = batch
+                    
                 text_embeddings, motion_embeddings = eval_wrapper.get_co_embeddings(
                     word_embs=word_embeddings,
                     pos_ohot=pos_one_hots,
@@ -46,6 +51,10 @@ def evaluate_matching_score(eval_wrapper, motion_loaders, file):
                 )
                 dist_mat = euclidean_distance_matrix(text_embeddings.cpu().numpy(),
                                                      motion_embeddings.cpu().numpy())
+                if math.isnan(dist_mat.trace()):
+                    print('nan detected')
+                    continue
+                
                 matching_score_sum += dist_mat.trace()
 
                 argsmax = np.argsort(dist_mat, axis=1)
@@ -79,13 +88,27 @@ def evaluate_fid(eval_wrapper, groundtruth_loader, activation_dict, file):
     eval_dict = OrderedDict({})
     gt_motion_embeddings = []
     print('========== Evaluating FID ==========')
+    groundtruth_loader.visualize = False
+    try:
+        groundtruth_loader.dataset.set_visualization(False)
+    except:
+        try:
+            groundtruth_loader.dataset.dataset.set_visualization(False)    
+        except:
+            print("used another motion loader here then ml")
     with torch.no_grad():
         for idx, batch in enumerate(groundtruth_loader):
-            _, _, _, sent_lens, motions, m_lens, _ = batch
+            try: 
+                _, _, _, sent_lens, motions, m_lens, _, _ = batch
+            except:
+                _, _, _, sent_lens, motions, m_lens, _ = batch
             motion_embeddings = eval_wrapper.get_motion_embeddings(
                 motions=motions,
                 m_lens=m_lens
             )
+            if(motion_embeddings.isnan().sum()>0):
+                print('nan detected')
+                continue
             gt_motion_embeddings.append(motion_embeddings.cpu().numpy())
     gt_motion_embeddings = np.concatenate(gt_motion_embeddings, axis=0)
     gt_mu, gt_cov = calculate_activation_statistics(gt_motion_embeddings)
@@ -120,7 +143,11 @@ def evaluate_multimodality(eval_wrapper, mm_motion_loaders, file, mm_num_times):
         with torch.no_grad():
             for idx, batch in enumerate(mm_motion_loader):
                 # (1, mm_replications, dim_pos)
-                motions, m_lens = batch
+                try:
+                    motions, m_lens, _ = batch
+                except:
+                    motions, m_lens = batch
+                    
                 motion_embedings = eval_wrapper.get_motion_embeddings(motions[0], m_lens[0])
                 mm_motion_embeddings.append(motion_embedings.unsqueeze(0))
         if len(mm_motion_embeddings) == 0:
@@ -274,6 +301,7 @@ if __name__ == '__main__':
     else:
         raise ValueError()
 
+    replication_times = 20
 
     dist_util.setup_dist(args.device)
     logger.configure()

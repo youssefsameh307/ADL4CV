@@ -61,13 +61,23 @@ def collate(batch):
 # an adapter to our collate func
 def t2m_collate(batch):
     # batch.sort(key=lambda x: x[3], reverse=True)
-    adapted_batch = [{
-        'inp': torch.tensor(b[4].T).float().unsqueeze(1), # [seqlen, J] -> [J, 1, seqlen]
-        'text': b[2], #b[0]['caption']
-        'tokens': b[6],
-        'lengths': b[5],
-        'img_condition':b[7] #TODO remove this if not needed
-    } for b in batch]
+    
+    
+    try:
+        adapted_batch = [{
+            'inp': torch.tensor(b[4].T).float().unsqueeze(1), # [seqlen, J] -> [J, 1, seqlen]
+            'text': b[2], #b[0]['caption']
+            'tokens': b[6],
+            'lengths': b[5],
+            'img_condition':b[7] #TODO remove this if not needed
+        } for b in batch]
+    except:
+        adapted_batch = [{
+            'inp': torch.tensor(b[4].T).float().unsqueeze(1), # [seqlen, J] -> [J, 1, seqlen]
+            'text': b[2], #b[0]['caption']
+            'tokens': b[6],
+            'lengths': b[5],
+        } for b in batch]
     return collate(adapted_batch)
 
 

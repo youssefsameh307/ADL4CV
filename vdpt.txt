@@ -1,5 +1,5 @@
 
-python -m eval.eval_humanml --model_path ./save/humanml_trans_enc_512/model000475000.pt
+python -m eval.eval_humanml --model_path ./save/controlformer_CNN_Control_10kx10k/model000006000.pt
 
 change the train loop to hide the text prompts at 50% of the time
 
