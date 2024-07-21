@@ -18,6 +18,9 @@ place it at the project directory at /save/your_model_name
 
 running a prediction can be done using 
 
+you can find conditioning images in the sample_conditioning_images folder
+
 python -m sample.generate --model_path path/to/checkpoint.pt --text_prompt "a person raises his right hand" --output_dir "/path/to/output/directory" --cond_path "/path/to/image/condition"
 
+if this gives an error due to a weights mimatch, switch to the presentation branch
 
