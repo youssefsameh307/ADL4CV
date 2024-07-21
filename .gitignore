@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-*.jpg 
+# *.jpg 
 *.png
 *.mp4
 *.txt
@@ -39,7 +39,7 @@ body_models/
 glove*
 exp/
 dataset*
-conditions/
+# conditions/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
